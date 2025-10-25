@@ -133,7 +133,7 @@ namespace {Namespace} {{
                 if (fieldType.GetAttributes().Any(a => a.AttributeClass?.Name == "BinaryStructAttribute")) {
                     yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
                 } else {
-                    _spc.ReportDiagnostic(Diagnostic.Create(Diagnostics.MissingBinaryStructAttributeRule, field.Locations.First(), fieldType.Name));
+                    ReportUnmarkedStructForField(field);
 
                     yield break;
                 }
@@ -180,5 +180,20 @@ namespace {Namespace} {{
 
             _ => false,
         };
+    }
+
+    private void ReportUnmarkedStructForField(IFieldSymbol field) {
+        var fieldSyntaxRef = field.DeclaringSyntaxReferences.FirstOrDefault();
+
+        var fieldSyntax = fieldSyntaxRef?.GetSyntax() as VariableDeclaratorSyntax;
+        if (fieldSyntax?.Parent is not VariableDeclarationSyntax varDecl) return;
+
+        var location = varDecl.Type.GetLocation();
+
+        _spc.ReportDiagnostic(Diagnostic.Create(
+            Diagnostics.MissingBinaryStructAttributeRule,
+            location,
+            field.Type.Name
+        ));
     }
 }
