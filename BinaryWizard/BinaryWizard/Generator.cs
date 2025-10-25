@@ -133,7 +133,7 @@ namespace {Namespace} {{
                 if (fieldType.GetAttributes().Any(a => a.AttributeClass?.Name == "BinaryStructAttribute")) {
                     yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
                 } else {
-                    _spc.ReportDiagnostic(Diagnostic.Create(Diagnostics.MissingFileError, field.Locations.First()));
+                    _spc.ReportDiagnostic(Diagnostic.Create(Diagnostics.MissingBinaryStructAttributeRule, field.Locations.First(), fieldType.Name));
 
                     yield break;
                 }
@@ -161,7 +161,7 @@ namespace {Namespace} {{
         };
     }
 
-    public static bool IsPrimitiveLike(ITypeSymbol symbol) {
+    private static bool IsPrimitiveLike(ITypeSymbol symbol) {
         return symbol.SpecialType switch {
             SpecialType.System_Boolean or
                 SpecialType.System_Byte or
@@ -181,5 +181,4 @@ namespace {Namespace} {{
             _ => false,
         };
     }
-
 }
