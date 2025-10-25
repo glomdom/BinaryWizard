@@ -20,10 +20,10 @@ namespace BinaryWizard;
 
 internal static class Diagnostics {
     internal static readonly DiagnosticDescriptor MissingFileError = new DiagnosticDescriptor(
-        id: "BINWZ0001",
-        title: "Missing nif.xml",
-        messageFormat: "Required configuration file 'nif.xml' was not found in the project",
-        category: "BinaryWizard",
+        id: "BW0001",
+        title: "Nested type is not marked with BinaryStruct attribute",
+        messageFormat: "Classes, structs, or records should be marked with the BinaryStruct attribute to be parseable",
+        category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );

@@ -22,4 +22,12 @@ namespace BinaryWizard.Sample;
 public partial class SampleEntity {
     public int Id;
     public int Name;
+    public SampleVector Vector;
+}
+
+[BinaryStruct]
+public partial class SampleVector {
+    public int X;
+    public int Y;
+    public int Z;
 }
