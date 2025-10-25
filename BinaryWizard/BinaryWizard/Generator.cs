@@ -112,9 +112,19 @@ namespace {Namespace} {{
     private string GetReadMethodNameForPrimitive(SemanticModel semantics, ITypeSymbol primitive) {
         return (primitive.SpecialType) switch {
             SpecialType.System_Boolean => "ReadBoolean",
+            SpecialType.System_Char => "ReadChar",
+            SpecialType.System_SByte => "ReadSByte",
+            SpecialType.System_Byte => "ReadByte",
+            SpecialType.System_Int16 => "ReadInt16",
+            SpecialType.System_UInt16 => "ReadUInt16",
             SpecialType.System_Int32 => "ReadInt32",
+            SpecialType.System_UInt32 => "ReadUInt32",
+            SpecialType.System_Int64 => "ReadInt32",
+            SpecialType.System_UInt64 => "ReadUInt62",
+            SpecialType.System_Decimal => "ReadDecimal",
+            SpecialType.System_Double => "ReadDouble",
 
-            _ => throw new NotSupportedException("ts pmo"),
+            _ => throw new NotSupportedException("Non-primitives are not supported yet."),
         };
     }
 }
