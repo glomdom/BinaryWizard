@@ -19,12 +19,13 @@ using Microsoft.CodeAnalysis;
 namespace BinaryWizard;
 
 internal static class Diagnostics {
-    internal static readonly DiagnosticDescriptor MissingFileError = new DiagnosticDescriptor(
+    internal static readonly DiagnosticDescriptor MissingBinaryStructAttributeRule = new(
         id: "BW0001",
-        title: "Nested type is not marked with BinaryStruct attribute",
-        messageFormat: "Classes, structs, or records should be marked with the BinaryStruct attribute to be parseable",
+        title: "Type must be annotated with [BinaryStruct]",
+        messageFormat: "The type '{0}' must be annotated with the [BinaryStruct] attribute to support binary parsing",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
+
 }
