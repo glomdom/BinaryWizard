@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025 glomdom
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Sample;
+namespace BinaryWizard;
 
-[BinarySerializable]
-public partial class SampleEntity {
-    public int Id;
-    public SampleVector Vector;
-}
-
-[BinarySerializable]
-public partial class SampleVector {
-    public int X;
-    public int Y;
-    public int Z;
+internal static class Constants {
+    internal static class Codegen {
+        public const string GeneratedNamespace = "BinaryWizard.Generated";
+        public const string Namespace = "BinaryWizard";
+    }
+    
+    internal static class Attributes {
+        public const string BinarySerializable = "BinarySerializableAttribute";
+    }
 }
