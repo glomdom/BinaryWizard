@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+using System;
+
 namespace BinaryWizard;
 
-[System.AttributeUsage(System.AttributeTargets.Class)]
-public class BinarySerializableAttribute : System.Attribute { }
+[AttributeUsage(AttributeTargets.Class)]
+public class BinarySerializableAttribute : Attribute { }
