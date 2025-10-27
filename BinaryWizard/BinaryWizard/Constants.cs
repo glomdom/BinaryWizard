@@ -18,11 +18,11 @@ namespace BinaryWizard;
 
 internal static class Constants {
     internal static class Codegen {
-        public const string GeneratedNamespace = "BinaryWizard.Generated";
-        public const string Namespace = "BinaryWizard";
+        internal const string GeneratedNamespace = "BinaryWizard.Generated";
+        internal const string Namespace = "BinaryWizard";
     }
-    
+
     internal static class Attributes {
-        public const string BinarySerializable = "BinarySerializableAttribute";
+        internal const string BinarySerializable = "BinarySerializableAttribute";
     }
 }
