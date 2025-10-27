@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025 glomdom
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,7 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Sample;
+namespace BinaryWizard;
 
-[BinarySerializable]
-public partial class SampleEntity {
-    public int Id;
-    public SampleVector Vector;
-}
-
-[BinarySerializable]
-public partial class SampleVector {
-    public int X;
-    public int Y;
-    public int Z;
-}
+[System.AttributeUsage(System.AttributeTargets.Class)]
+public class BinarySerializableAttribute : System.Attribute { }
