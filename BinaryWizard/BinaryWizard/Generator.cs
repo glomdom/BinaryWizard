@@ -103,7 +103,7 @@ public class Generator : IIncrementalGenerator {
 
             var code = unit.NormalizeWhitespace().ToFullString();
 
-            _spc.AddSource($"BinaryStruct_{className}.g.cs", SourceText.From(code, Encoding.UTF8));
+            _spc.AddSource($"BinarySerializable_{className}.g.cs", SourceText.From(code, Encoding.UTF8));
         }
     }
 
