@@ -25,6 +25,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BinaryWizard;
 
@@ -36,15 +37,22 @@ public class Generator : IIncrementalGenerator {
 
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         var assembly = Assembly.GetExecutingAssembly();
+        var resourceNames = assembly.GetManifestResourceNames();
 
-        using var stream = assembly.GetManifestResourceStream("BinaryWizard.Embedded.BinarySerializableAttribute.cs")!;
-        using var reader = new StreamReader(stream);
-        var attributeSource = reader.ReadToEnd();
+        context.RegisterPostInitializationOutput(ctx => {
+            foreach (var resourceName in resourceNames) {
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream is null) continue;
 
-        context.RegisterPostInitializationOutput(ctx => ctx.AddSource(
-            "BinarySerializableAttribute.cs",
-            SourceText.From(attributeSource, Encoding.UTF8))
-        );
+                using var reader = new StreamReader(stream);
+                var source = reader.ReadToEnd();
+
+                var hintParts = Path.GetFileNameWithoutExtension(resourceName).Split('.');
+                var hintName = hintParts[hintParts.Length - 1];
+
+                ctx.AddSource(hintName, SourceText.From(source, Encoding.UTF8));
+            }
+        });
 
         var provider = context.SyntaxProvider
             .CreateSyntaxProvider(
@@ -136,6 +144,25 @@ public class Generator : IIncrementalGenerator {
 
                 yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = reader.{method}();");
             } else {
+                if (IsArrayLike(fieldType, out var arrSymbol)) {
+                    if (arrSymbol.Rank != 1) throw new NotSupportedException("Arrays which have more than 1 dimension are not supported.");
+
+                    var binaryArrayAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "BinaryArrayAttribute");
+                    if (binaryArrayAttr is null || !TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
+                        ReportArraylikeMissingConstSize(field);
+
+                        yield break;
+                    }
+
+                    var statements = GetReadStatementsForArray(semantics, arrSymbol, outputName, field.Name, (int)arrSize.Value!);
+
+                    foreach (var statement in statements) {
+                        yield return statement;
+                    }
+
+                    continue;
+                }
+
                 if (fieldType.GetAttributes().Any(a => a.AttributeClass?.Name == "BinarySerializableAttribute")) {
                     yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
                 } else {
@@ -145,6 +172,14 @@ public class Generator : IIncrementalGenerator {
                 }
             }
         }
+    }
+
+    private IEnumerable<StatementSyntax> GetReadStatementsForArray(SemanticModel semantics, IArrayTypeSymbol fieldType, string outName, string fieldName, int arrSize) {
+        if (fieldType.ElementType.SpecialType == SpecialType.System_Byte) {
+            yield return SyntaxFactory.ParseStatement($"{outName}.{fieldName} = reader.ReadBytes({arrSize});");
+        }
+
+        yield break;
     }
 
     private string GetReadMethodNameForPrimitive(SemanticModel semantics, ITypeSymbol primitive) {
@@ -188,18 +223,63 @@ public class Generator : IIncrementalGenerator {
         };
     }
 
+    private static bool IsArrayLike(ITypeSymbol symbol, [NotNullWhen(true)] out IArrayTypeSymbol? arraySymbol) {
+        if (symbol is IArrayTypeSymbol arr) {
+            arraySymbol = arr;
+
+            return true;
+        }
+
+        arraySymbol = null;
+
+        return false;
+    }
+
+
+    private void ReportArraylikeMissingConstSize(IFieldSymbol field) {
+        var location = GetVariableDeclaratorLocation(field);
+
+        _spc.ReportDiagnostic(Diagnostic.Create(
+            Diagnostics.ArraylikeHasNoConstCapacityRule,
+            location,
+            field.Name
+        ));
+    }
+
+    private static bool TryGetNamedArg(
+        AttributeData attr,
+        string name,
+        out TypedConstant typedConstant
+    ) {
+        foreach (var pair in attr.NamedArguments.Where(pair => pair.Key == name)) {
+            typedConstant = pair.Value;
+
+            return true;
+        }
+
+        typedConstant = default;
+
+        return false;
+    }
+
     private void ReportUnmarkedSerializableForField(IFieldSymbol field) {
-        var fieldSyntaxRef = field.DeclaringSyntaxReferences.FirstOrDefault();
-
-        var fieldSyntax = fieldSyntaxRef?.GetSyntax() as VariableDeclaratorSyntax;
-        if (fieldSyntax?.Parent is not VariableDeclarationSyntax varDecl) return;
-
-        var location = varDecl.Type.GetLocation();
+        var location = GetVariableDeclaratorLocation(field);
 
         _spc.ReportDiagnostic(Diagnostic.Create(
             Diagnostics.MissingBinarySerializableAttributeRule,
             location,
             field.Type.Name
         ));
+    }
+
+    private Location GetVariableDeclaratorLocation(IFieldSymbol field) {
+        var fieldSyntaxRef = field.DeclaringSyntaxReferences.FirstOrDefault();
+
+        var fieldSyntax = fieldSyntaxRef?.GetSyntax() as VariableDeclaratorSyntax;
+        if (fieldSyntax?.Parent is not VariableDeclarationSyntax varDecl) throw new Exception("Field parent is not a variable declaration.");
+
+        var location = varDecl.Type.GetLocation();
+
+        return location;
     }
 }

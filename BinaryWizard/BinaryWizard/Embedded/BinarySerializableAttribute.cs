@@ -19,4 +19,4 @@ using System;
 namespace BinaryWizard;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class BinarySerializableAttribute : Attribute { }
+public sealed class BinarySerializableAttribute : Attribute { }
