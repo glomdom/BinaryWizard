@@ -27,5 +27,13 @@ internal static class Diagnostics {
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
-
+    
+    internal static readonly DiagnosticDescriptor ArraylikeHasNoConstCapacityRule = new(
+        id: "BW0002",
+        title: "Array-like type has no const capacity defined",
+        messageFormat: "The type '{0}' must be annotated with either the [BinaryArray] attribute or have a known size at compile time to support binary parsing",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
 }
