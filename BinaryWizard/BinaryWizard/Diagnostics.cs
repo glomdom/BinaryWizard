@@ -19,10 +19,10 @@ using Microsoft.CodeAnalysis;
 namespace BinaryWizard;
 
 internal static class Diagnostics {
-    internal static readonly DiagnosticDescriptor MissingBinaryStructAttributeRule = new(
+    internal static readonly DiagnosticDescriptor MissingBinarySerializableAttributeRule = new(
         id: "BW0001",
-        title: "Type must be annotated with [BinaryStruct]",
-        messageFormat: "The type '{0}' must be annotated with the [BinaryStruct] attribute to support binary parsing",
+        title: "Type must be annotated with [BinarySerializable]",
+        messageFormat: "The type '{0}' must be annotated with the [BinarySerializable] attribute to support binary parsing",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true

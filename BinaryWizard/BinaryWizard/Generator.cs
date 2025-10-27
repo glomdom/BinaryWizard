@@ -139,7 +139,7 @@ public class Generator : IIncrementalGenerator {
                 if (fieldType.GetAttributes().Any(a => a.AttributeClass?.Name == "BinarySerializableAttribute")) {
                     yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
                 } else {
-                    ReportUnmarkedStructForField(field);
+                    ReportUnmarkedSerializableForField(field);
 
                     yield break;
                 }
@@ -188,7 +188,7 @@ public class Generator : IIncrementalGenerator {
         };
     }
 
-    private void ReportUnmarkedStructForField(IFieldSymbol field) {
+    private void ReportUnmarkedSerializableForField(IFieldSymbol field) {
         var fieldSyntaxRef = field.DeclaringSyntaxReferences.FirstOrDefault();
 
         var fieldSyntax = fieldSyntaxRef?.GetSyntax() as VariableDeclaratorSyntax;
@@ -197,7 +197,7 @@ public class Generator : IIncrementalGenerator {
         var location = varDecl.Type.GetLocation();
 
         _spc.ReportDiagnostic(Diagnostic.Create(
-            Diagnostics.MissingBinaryStructAttributeRule,
+            Diagnostics.MissingBinarySerializableAttributeRule,
             location,
             field.Type.Name
         ));
