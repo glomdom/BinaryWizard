@@ -18,14 +18,14 @@ using BinaryWizard.Generated;
 
 namespace BinaryWizard.Sample;
 
-[BinaryStruct]
+[BinarySerializable]
 public partial class SampleEntity {
     public int Id;
     public int Name;
     public SampleVector Vector;
 }
 
-[BinaryStruct]
+[BinarySerializable]
 public partial class SampleVector {
     public int X;
     public int Y;
