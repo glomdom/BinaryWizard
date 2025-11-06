@@ -241,17 +241,6 @@ public class Generator : IIncrementalGenerator {
         return false;
     }
 
-
-    private void ReportArraylikeMissingConstSize(IFieldSymbol field) {
-        var location = GetVariableDeclaratorLocation(field);
-
-        _spc.ReportDiagnostic(Diagnostic.Create(
-            Diagnostics.ArraylikeHasNoConstCapacityRule,
-            location,
-            field.Name
-        ));
-    }
-
     private static bool TryGetNamedArg(
         AttributeData attr,
         string name,
@@ -266,6 +255,16 @@ public class Generator : IIncrementalGenerator {
         typedConstant = default;
 
         return false;
+    }
+
+    private void ReportArraylikeMissingConstSize(IFieldSymbol field) {
+        var location = GetVariableDeclaratorNameLocation(field);
+
+        _spc.ReportDiagnostic(Diagnostic.Create(
+            Diagnostics.ArraylikeHasNoConstCapacityRule,
+            location,
+            field.Name
+        ));
     }
 
     private void ReportUnmarkedSerializableForField(IFieldSymbol field) {
@@ -288,4 +287,14 @@ public class Generator : IIncrementalGenerator {
 
         return location;
     }
+
+    private Location GetVariableDeclaratorNameLocation(IFieldSymbol field) {
+        var fieldSyntaxRef = field.DeclaringSyntaxReferences.FirstOrDefault();
+        if (fieldSyntaxRef is null) throw new Exception("No syntax reference found for field.");
+
+        return fieldSyntaxRef.GetSyntax() is not VariableDeclaratorSyntax fieldSyntax
+            ? throw new Exception("Field syntax is not a VariableDeclaratorSyntax.")
+            : fieldSyntax.Identifier.GetLocation();
+    }
+
 }
