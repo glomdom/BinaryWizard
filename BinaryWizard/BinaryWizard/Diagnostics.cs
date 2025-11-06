@@ -22,7 +22,7 @@ internal static class Diagnostics {
     internal static readonly DiagnosticDescriptor MissingBinarySerializableAttributeRule = new(
         id: "BW0001",
         title: "Type must be annotated with [BinarySerializable]",
-        messageFormat: "The type '{0}' must be annotated with the [BinarySerializable] attribute to support binary parsing",
+        messageFormat: "The type '{0}' must be annotated with the [BinarySerializable] attribute to support binary serdes",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
@@ -31,7 +31,7 @@ internal static class Diagnostics {
     internal static readonly DiagnosticDescriptor ArraylikeHasNoConstCapacityRule = new(
         id: "BW0002",
         title: "Array-like type has no const capacity defined",
-        messageFormat: "The type '{0}' must be annotated with either the [BinaryArray] attribute or have a known size at compile time to support binary parsing",
+        messageFormat: "The type '{0}' must be annotated with either the [BinaryArray] attribute or support binary serdes",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
