@@ -140,7 +140,7 @@ public class Generator : IIncrementalGenerator {
             var fieldType = field.Type;
 
             if (IsPrimitiveLike(fieldType)) {
-                var method = GetReadMethodNameForPrimitive(semantics, fieldType);
+                var method = GetReadMethodNameForPrimitive(fieldType);
 
                 yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = reader.{method}();");
             } else {
@@ -175,14 +175,20 @@ public class Generator : IIncrementalGenerator {
     }
 
     private IEnumerable<StatementSyntax> GetReadStatementsForArray(SemanticModel semantics, IArrayTypeSymbol fieldType, string outName, string fieldName, int arrSize) {
-        if (fieldType.ElementType.SpecialType == SpecialType.System_Byte) {
+        var elemType = fieldType.ElementType;
+
+        if (elemType.SpecialType == SpecialType.System_Byte) {
+            // little optimization for bytes
+
             yield return SyntaxFactory.ParseStatement($"{outName}.{fieldName} = reader.ReadBytes({arrSize});");
+        } else if (IsPrimitiveLike(elemType)) {
+            yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = reader.{GetReadMethodNameForPrimitive(elemType)}();");
         }
 
         yield break;
     }
 
-    private string GetReadMethodNameForPrimitive(SemanticModel semantics, ITypeSymbol primitive) {
+    private string GetReadMethodNameForPrimitive(ITypeSymbol primitive) {
         return (primitive.SpecialType) switch {
             SpecialType.System_Boolean => "ReadBoolean",
             SpecialType.System_Char => "ReadChar",
@@ -198,7 +204,7 @@ public class Generator : IIncrementalGenerator {
             SpecialType.System_Double => "ReadDouble",
             SpecialType.System_String => "ReadString",
 
-            _ => throw new Exception("This should not throw."),
+            _ => throw new InvalidOperationException("Unexpected case encountered."),
         };
     }
 
