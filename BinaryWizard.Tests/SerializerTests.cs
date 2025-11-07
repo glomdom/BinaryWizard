@@ -38,4 +38,27 @@ public class SerializerTests {
 
         Assert.Equal(expected, actual);
     }
+
+    [Fact]
+    public void Entity_CorrectlySerialized() {
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true)) {
+            writer.Write(69); // Id
+            writer.Write("glomdom"); // Name
+
+            // Position: Vector3
+            writer.Write(1); // X
+            writer.Write(2); // Y
+            writer.Write(3); // Z
+        }
+
+        stream.Position = 0;
+
+        using var reader = new BinaryReader(stream);
+
+        var actual = Entity.FromBinary(reader);
+        var expected = new Entity { Id = 69, Name = "glomdom", Position = new Vector3 { X = 1, Y = 2, Z = 3 } };
+
+        Assert.Equal(expected, actual);
+    }
 }
