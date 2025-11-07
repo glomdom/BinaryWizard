@@ -148,16 +148,38 @@ public class Generator : IIncrementalGenerator {
                     if (arrSymbol.Rank != 1) throw new NotSupportedException("Arrays which have more than 1 dimension are not supported.");
 
                     var binaryArrayAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "BinaryArrayAttribute");
-                    if (binaryArrayAttr is null || !TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
-                        ReportArraylikeMissingConstSize(field);
+                    if (binaryArrayAttr is null) {
+                        ReportArrayIsMissingAttribute(field);
 
                         yield break;
                     }
 
-                    var statements = GetReadStatementsForArray(semantics, arrSymbol, outputName, field.Name, (int)arrSize.Value!);
+                    if (!AreAnyNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
+                        ReportArrayIsMissingSizeArgument(field);
 
-                    foreach (var statement in statements) {
-                        yield return statement;
+                        yield break;
+                    }
+
+                    if (AreAllNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
+                        ReportArrayHasConflictingSizeArguments(field);
+
+                        yield break;
+                    }
+
+                    if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
+                        var statements = GetReadStatementsForArrayWithSize(semantics, arrSymbol, outputName, field.Name, (int)arrSize.Value!);
+
+                        foreach (var statement in statements) {
+                            yield return statement;
+                        }
+                    }
+
+                    if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
+                        var statements = GetReadStatementsForArrayWithMember(semantics, arrSymbol, outputName, field.Name, (string)sizeMember.Value!);
+
+                        foreach (var statement in statements) {
+                            yield return statement;
+                        }
                     }
 
                     continue;
@@ -174,12 +196,35 @@ public class Generator : IIncrementalGenerator {
         }
     }
 
-    private IEnumerable<StatementSyntax> GetReadStatementsForArray(SemanticModel semantics, IArrayTypeSymbol fieldType, string outName, string fieldName, int arrSize) {
+    private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithMember(SemanticModel semantics,
+        IArrayTypeSymbol fieldType,
+        string outName,
+        string fieldName,
+        string memberName
+    ) {
         var elemType = fieldType.ElementType;
 
-        if (elemType.SpecialType == SpecialType.System_Byte) {
-            // little optimization for bytes
+        if (IsPrimitiveLike(elemType)) {
+            yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {outName}.{memberName}; i++) {outName}.{fieldName}[i] = reader.{GetReadMethodNameForPrimitive(elemType)}();");
 
+            yield break;
+        }
+
+        if (HasBinarySerializableAttribute(elemType)) {
+            yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {outName}.{memberName}; i++) {outName}.{fieldName}[i] = {elemType.Name}.FromBinary(reader);");
+
+            yield break;
+        }
+
+        // idk what to do here, still don't know if we can reach this
+        throw new NotSupportedException($"Failed to create read statements for `{elemType}`");
+    }
+
+    private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithSize(SemanticModel semantics, IArrayTypeSymbol fieldType, string outName, string fieldName, int arrSize) {
+        var elemType = fieldType.ElementType;
+
+        // little optimization for bytes
+        if (elemType.SpecialType == SpecialType.System_Byte) {
             yield return SyntaxFactory.ParseStatement($"{outName}.{fieldName} = reader.ReadBytes({arrSize});");
 
             yield break;
@@ -199,6 +244,13 @@ public class Generator : IIncrementalGenerator {
 
         // idk what to do here, still don't know if we can reach this
         throw new NotSupportedException($"Failed to create read statements for `{elemType}`");
+    }
+
+    private static TypedConstant OneArgOfMany(AttributeData data, params string[] args) {
+        return args
+                   .Select(arg => GetNamedArg(data, arg))
+                   .FirstOrDefault(r => r is not null) ??
+               throw new Exception($"Expected one of {string.Join(" or ", args)} to exist");
     }
 
     private static bool HasBinarySerializableAttribute(ITypeSymbol sym) => HasAttribute(sym, "BinarySerializableAttribute");
@@ -257,6 +309,22 @@ public class Generator : IIncrementalGenerator {
         return false;
     }
 
+    private static bool AreAllNamedArgsProvided(AttributeData attr, params string[] names) {
+        return attr.NamedArguments.Length != 0 && names.Select(name => attr.NamedArguments.Any(pair => pair.Key == name)).All(found => found);
+    }
+
+    private static bool AreAnyNamedArgsProvided(AttributeData attr, params string[] names) {
+        return attr.NamedArguments.Length != 0 && names.Any(name => attr.NamedArguments.Any(pair => pair.Key == name));
+    }
+
+    private static TypedConstant? GetNamedArg(AttributeData attr, string name) {
+        foreach (var pair in attr.NamedArguments.Where(pair => pair.Key == name)) {
+            return pair.Value;
+        }
+
+        return null;
+    }
+
     private static bool TryGetNamedArg(
         AttributeData attr,
         string name,
@@ -273,11 +341,31 @@ public class Generator : IIncrementalGenerator {
         return false;
     }
 
-    private void ReportArraylikeMissingConstSize(IFieldSymbol field) {
+    private void ReportArrayHasConflictingSizeArguments(IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
         _spc.ReportDiagnostic(Diagnostic.Create(
-            Diagnostics.ArraylikeHasNoConstCapacityRule,
+            Diagnostics.ArrayHasConflictingSizeArguments,
+            location,
+            field.Name
+        ));
+    }
+
+    private void ReportArrayIsMissingSizeArgument(IFieldSymbol field) {
+        var location = GetVariableDeclaratorNameLocation(field);
+
+        _spc.ReportDiagnostic(Diagnostic.Create(
+            Diagnostics.MarkedArraylikeHasNoSizeOrSizeProviderRule,
+            location,
+            field.Name
+        ));
+    }
+
+    private void ReportArrayIsMissingAttribute(IFieldSymbol field) {
+        var location = GetVariableDeclaratorNameLocation(field);
+
+        _spc.ReportDiagnostic(Diagnostic.Create(
+            Diagnostics.ArrayHasNoBinaryArrayAttributeRule,
             location,
             field.Name
         ));
@@ -312,5 +400,4 @@ public class Generator : IIncrementalGenerator {
             ? throw new Exception("Field syntax is not a VariableDeclaratorSyntax.")
             : fieldSyntax.Identifier.GetLocation();
     }
-
 }
