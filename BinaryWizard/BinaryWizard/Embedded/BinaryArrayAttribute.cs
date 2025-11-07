@@ -20,5 +20,13 @@ namespace BinaryWizard;
 
 [AttributeUsage(AttributeTargets.Field)]
 public sealed class BinaryArrayAttribute : Attribute {
+    /// <summary>
+    /// Integer which defines a constant array size. Use <see cref="SizeMember"/> to use dynamic values from the current object.
+    /// </summary>
     public int Size { get; set; }
+    
+    /// <summary>
+    /// The name of the member which provides the array size.
+    /// </summary>
+    public string? SizeMember { get; set; }
 }

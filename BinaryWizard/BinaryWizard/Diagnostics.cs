@@ -28,10 +28,28 @@ internal static class Diagnostics {
         isEnabledByDefault: true
     );
     
-    internal static readonly DiagnosticDescriptor ArraylikeHasNoConstCapacityRule = new(
+    internal static readonly DiagnosticDescriptor ArrayHasNoBinaryArrayAttributeRule = new(
         id: "BW0002",
-        title: "Array-like field has no const capacity defined",
+        title: "Array type does not have a [BinaryArray] attribute",
         messageFormat: "The field '{0}' must be annotated with a [BinaryArray] attribute to support binary serdes",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+    
+    internal static readonly DiagnosticDescriptor MarkedArraylikeHasNoSizeOrSizeProviderRule = new(
+        id: "BW0003",
+        title: "Array marked with [BinaryArray] is missing size provider or constant size",
+        messageFormat: "The [BinaryArray] attribute on field '{0}' is missing argument defining size",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+    
+    internal static readonly DiagnosticDescriptor ArrayHasConflictingSizeArguments = new(
+        id: "BW0004",
+        title: "Array marked with [BinaryArray] has conflicting size arguments",
+        messageFormat: "The [BinaryArray] attribute on field '{0}' has arguments which conflict",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
