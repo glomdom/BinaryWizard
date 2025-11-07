@@ -18,9 +18,7 @@ namespace BinaryWizard.Sample;
 
 [BinarySerializable]
 public partial class SampleEntity {
-    public SampleVector Vector;
-
-    [BinaryArray(Size = 2)] public int[] Ids;
+    [BinaryArray(Size = 2)] public SampleVector[] Vectors;
 }
 
 [BinarySerializable]
