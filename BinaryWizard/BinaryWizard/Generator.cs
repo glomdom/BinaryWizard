@@ -183,16 +183,18 @@ public class Generator : IIncrementalGenerator {
             yield return SyntaxFactory.ParseStatement($"{outName}.{fieldName} = reader.ReadBytes({arrSize});");
 
             yield break;
-        } else if (IsPrimitiveLike(elemType)) {
+        }
+
+        if (IsPrimitiveLike(elemType)) {
             yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = reader.{GetReadMethodNameForPrimitive(elemType)}();");
 
             yield break;
-        } else {
-            if (HasBinarySerializableAttribute(elemType)) {
-                yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = {elemType.Name}.FromBinary(reader);");
+        }
 
-                yield break;
-            }
+        if (HasBinarySerializableAttribute(elemType)) {
+            yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = {elemType.Name}.FromBinary(reader);");
+
+            yield break;
         }
 
         // idk what to do here, still don't know if we can reach this
