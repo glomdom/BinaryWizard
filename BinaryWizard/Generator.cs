@@ -56,8 +56,8 @@ public class Generator : IIncrementalGenerator {
 
         var provider = context.SyntaxProvider
             .CreateSyntaxProvider(
-                (s, _) => s is ClassDeclarationSyntax,
-                (ctx, _) => GetClassDeclarationForSourceGen(ctx))
+                (s, _) => s is ClassDeclarationSyntax or StructDeclarationSyntax,
+                (ctx, _) => GetTypeDeclarationForSourceGen(ctx))
             .Where(t => t.reportAttributeFound)
             .Select((t, _) => t.Item1);
 
@@ -73,30 +73,34 @@ public class Generator : IIncrementalGenerator {
         );
     }
 
-    private static (ClassDeclarationSyntax, bool reportAttributeFound) GetClassDeclarationForSourceGen(GeneratorSyntaxContext context) {
-        var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
+    private static (TypeDeclarationSyntax, bool reportAttributeFound) GetTypeDeclarationForSourceGen(GeneratorSyntaxContext context) {
+        var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
-        foreach (var attributeSyntax in classDeclarationSyntax.AttributeLists.SelectMany(attributeListSyntax => attributeListSyntax.Attributes)) {
+        foreach (var attributeSyntax in typeDeclaration.AttributeLists.SelectMany(list => list.Attributes)) {
             if (ModelExtensions.GetSymbolInfo(context.SemanticModel, attributeSyntax).Symbol is not IMethodSymbol attributeSymbol) continue;
 
             var attributeName = attributeSymbol.ContainingType.ToDisplayString();
-            if (attributeName == $"{Constants.Codegen.Namespace}.{Constants.Attributes.BinarySerializable}") return (classDeclarationSyntax, true);
+            if (attributeName == $"{Constants.Codegen.Namespace}.{Constants.Attributes.BinarySerializable}") return (typeDeclaration, true);
         }
 
-        return (classDeclarationSyntax, false);
+        return (typeDeclaration, false);
     }
 
-    private void GenerateCode(Compilation compilation, ImmutableArray<ClassDeclarationSyntax> classDeclarations) {
-        foreach (var classDeclarationSyntax in classDeclarations) {
-            var semanticModel = compilation.GetSemanticModel(classDeclarationSyntax.SyntaxTree);
-            if (ModelExtensions.GetDeclaredSymbol(semanticModel, classDeclarationSyntax) is not INamedTypeSymbol classSymbol) continue;
+    private void GenerateCode(Compilation compilation, ImmutableArray<TypeDeclarationSyntax> classDeclarations) {
+        foreach (var declarationSyntax in classDeclarations) {
+            var semanticModel = compilation.GetSemanticModel(declarationSyntax.SyntaxTree);
+            if (ModelExtensions.GetDeclaredSymbol(semanticModel, declarationSyntax) is not INamedTypeSymbol classSymbol) continue;
 
             var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
-            var className = classDeclarationSyntax.Identifier.Text;
+            var declarationName = declarationSyntax.Identifier.Text;
 
             var method = CreateReadMethod(semanticModel, classSymbol);
 
-            var clazz = SyntaxFactory.ClassDeclaration(className)
+            TypeDeclarationSyntax declaration = declarationSyntax is ClassDeclarationSyntax
+                ? SyntaxFactory.ClassDeclaration(declarationName)
+                : SyntaxFactory.StructDeclaration(declarationName);
+
+            var clazz = declaration
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PartialKeyword))
                 .AddMembers(method);
 
@@ -111,7 +115,7 @@ public class Generator : IIncrementalGenerator {
 
             var code = unit.NormalizeWhitespace().ToFullString();
 
-            _spc.AddSource($"BinarySerializable_{className}.g.cs", SourceText.From(code, Encoding.UTF8));
+            _spc.AddSource($"BinarySerializable_{declarationName}.g.cs", SourceText.From(code, Encoding.UTF8));
         }
     }
 
@@ -205,7 +209,8 @@ public class Generator : IIncrementalGenerator {
         var elemType = fieldType.ElementType;
 
         if (IsPrimitiveLike(elemType)) {
-            yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {outName}.{memberName}; i++) {outName}.{fieldName}[i] = reader.{GetReadMethodNameForPrimitive(elemType)}();");
+            yield return SyntaxFactory.ParseStatement(
+                $"for (var i = 0; i < {outName}.{memberName}; i++) {outName}.{fieldName}[i] = reader.{GetReadMethodNameForPrimitive(elemType)}();");
 
             yield break;
         }
