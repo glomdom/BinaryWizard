@@ -18,5 +18,5 @@ using System;
 
 namespace BinaryWizard;
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 public sealed class BinarySerializableAttribute : Attribute { }
