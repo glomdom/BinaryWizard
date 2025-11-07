@@ -1,8 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryWizard", "BinaryWizard\BinaryWizard\BinaryWizard.csproj", "{4A11A51B-0FE4-42AD-B152-F95B7D009676}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryWizard", "BinaryWizard\BinaryWizard.csproj", "{4A11A51B-0FE4-42AD-B152-F95B7D009676}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryWizard.Sample", "BinaryWizard\BinaryWizard.Sample\BinaryWizard.Sample.csproj", "{99775555-2372-4DD8-9BC1-497BA74424B9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryWizard.Sample", "BinaryWizard.Sample\BinaryWizard.Sample.csproj", "{99775555-2372-4DD8-9BC1-497BA74424B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BinaryWizard.Tests", "BinaryWizard.Tests\BinaryWizard.Tests.csproj", "{52ABA7B9-3091-4AC6-8A11-3ABF680B620E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +20,9 @@ Global
 		{99775555-2372-4DD8-9BC1-497BA74424B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99775555-2372-4DD8-9BC1-497BA74424B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99775555-2372-4DD8-9BC1-497BA74424B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52ABA7B9-3091-4AC6-8A11-3ABF680B620E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52ABA7B9-3091-4AC6-8A11-3ABF680B620E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52ABA7B9-3091-4AC6-8A11-3ABF680B620E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52ABA7B9-3091-4AC6-8A11-3ABF680B620E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
