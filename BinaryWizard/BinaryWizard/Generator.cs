@@ -163,7 +163,7 @@ public class Generator : IIncrementalGenerator {
                     continue;
                 }
 
-                if (fieldType.GetAttributes().Any(a => a.AttributeClass?.Name == "BinarySerializableAttribute")) {
+                if (HasBinarySerializableAttribute(fieldType)) {
                     yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
                 } else {
                     ReportUnmarkedSerializableForField(field);
@@ -181,12 +181,26 @@ public class Generator : IIncrementalGenerator {
             // little optimization for bytes
 
             yield return SyntaxFactory.ParseStatement($"{outName}.{fieldName} = reader.ReadBytes({arrSize});");
+
+            yield break;
         } else if (IsPrimitiveLike(elemType)) {
             yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = reader.{GetReadMethodNameForPrimitive(elemType)}();");
+
+            yield break;
+        } else {
+            if (HasBinarySerializableAttribute(elemType)) {
+                yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = {elemType.Name}.FromBinary(reader);");
+
+                yield break;
+            }
         }
 
-        yield break;
+        // idk what to do here, still don't know if we can reach this
+        throw new NotSupportedException($"Failed to create read statements for `{elemType}`");
     }
+
+    private static bool HasBinarySerializableAttribute(ITypeSymbol sym) => HasAttribute(sym, "BinarySerializableAttribute");
+    private static bool HasAttribute(ITypeSymbol sym, string attrName) => sym.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
 
     private string GetReadMethodNameForPrimitive(ITypeSymbol primitive) {
         return (primitive.SpecialType) switch {
