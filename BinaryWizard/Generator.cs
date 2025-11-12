@@ -155,9 +155,9 @@ public class Generator : IIncrementalGenerator {
                 var fieldDef = new FieldDef(field.Name) {
                     ByteSize = GetByteSizeForPrimitive(fieldType),
                 };
-                
+
                 _segmentManager.AddField(fieldDef);
-                
+
                 Debug.WriteLine($"Created field definition for {field.Name} with byte size {fieldDef.ByteSize}. Dynamic = {fieldDef.IsDynamic}");
 
                 var method = GetReadMethodNameForPrimitive(fieldType);
@@ -185,22 +185,33 @@ public class Generator : IIncrementalGenerator {
                     yield break;
                 }
 
+                var fieldDef = new FieldDef(fieldType.Name);
+
                 if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
-                    var statements = GetReadStatementsForArrayWithSize(semantics, arrSymbol, outputName, field.Name, (int)arrSize.Value!);
+                    var arrSizeValue = (int)arrSize.Value!;
+                    fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
+
+                    var statements = GetReadStatementsForArrayWithSize(semantics, arrSymbol, outputName, field.Name, arrSizeValue);
 
                     foreach (var statement in statements) {
                         yield return statement;
                     }
-                }
+                } else if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
+                    // TODO: dynamic segments
 
-                if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
                     var statements = GetReadStatementsForArrayWithMember(semantics, arrSymbol, outputName, field.Name, (string)sizeMember.Value!);
 
                     foreach (var statement in statements) {
                         yield return statement;
                     }
                 }
+
+                Debug.WriteLine($"Created field definition for {field.Name} with byte size {fieldDef.ByteSize}. Dynamic = {fieldDef.IsDynamic}");
+
+                _segmentManager.AddField(fieldDef);
             } else if (HasBinarySerializableAttribute(fieldType)) {
+                // TODO: maybe implement segmenting for nested reading? unsure of how to implement yet
+
                 yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
 
                 Debug.WriteLine("Built statements for nested object");
@@ -293,7 +304,6 @@ public class Generator : IIncrementalGenerator {
             SpecialType.System_UInt64 => 8,
             SpecialType.System_Decimal => 16,
             SpecialType.System_Double => 32,
-            SpecialType.System_String => -1,
 
             _ => throw new InvalidOperationException("Unexpected case encountered."),
         };
