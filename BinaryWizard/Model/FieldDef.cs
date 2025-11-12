@@ -18,6 +18,9 @@ namespace BinaryWizard.Model;
 
 public record FieldDef {
     public string Name { get; set; }
+    public int ByteSize { get; set; }
+
+    public bool IsDynamic => ByteSize == -1;
 
     public FieldDef(string name) {
         Name = name;
