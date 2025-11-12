@@ -17,6 +17,8 @@ sealed internal class SegmentManager {
 
     public IReadOnlyList<Segment> Commit() {
         CommitFixed();
+        
+        Debug.WriteLine($"Finalized segmenting with {_segments.Count} segments");
 
         return _segments;
     }
