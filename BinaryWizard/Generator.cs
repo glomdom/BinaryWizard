@@ -156,6 +156,8 @@ public class Generator : IIncrementalGenerator {
                     ByteSize = GetByteSizeForPrimitive(fieldType),
                 };
                 
+                _segmentManager.AddField(fieldDef);
+                
                 Debug.WriteLine($"Created field definition for {field.Name} with byte size {fieldDef.ByteSize}. Dynamic = {fieldDef.IsDynamic}");
 
                 var method = GetReadMethodNameForPrimitive(fieldType);
