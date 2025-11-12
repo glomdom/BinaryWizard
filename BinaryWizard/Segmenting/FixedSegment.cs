@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
+using System.Collections.Generic;
+using BinaryWizard.Model;
+
 namespace BinaryWizard.Segmenting;
 
 public record FixedSegment : Segment {
+    public IReadOnlyList<FieldDef> Fields { get; set; }
     public int Bytes { get; set; }
 
-    public FixedSegment(int bytes) {
+    public FixedSegment(List<FieldDef> fields, int bytes) {
+        Fields = fields;
         Bytes = bytes;
     }
 }
