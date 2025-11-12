@@ -189,11 +189,7 @@ public class Generator : IIncrementalGenerator {
                         yield return statement;
                     }
                 }
-
-                continue;
-            }
-
-            if (HasBinarySerializableAttribute(fieldType)) {
+            } else if (HasBinarySerializableAttribute(fieldType)) {
                 yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
 
                 Debug.WriteLine("Built statements for nested object");
