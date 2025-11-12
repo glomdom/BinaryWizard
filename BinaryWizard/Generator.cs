@@ -152,57 +152,55 @@ public class Generator : IIncrementalGenerator {
                 var method = GetReadMethodNameForPrimitive(fieldType);
 
                 yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = reader.{method}();");
-            } else {
-                if (IsArrayLike(fieldType, out var arrSymbol)) {
-                    if (arrSymbol.Rank != 1) throw new NotSupportedException("Arrays which have more than 1 dimension are not supported.");
+            } else if (IsArrayLike(fieldType, out var arrSymbol)) {
+                if (arrSymbol.Rank != 1) throw new NotSupportedException("Arrays which have more than 1 dimension are not supported.");
 
-                    var binaryArrayAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "BinaryArrayAttribute");
-                    if (binaryArrayAttr is null) {
-                        ReportArrayIsMissingAttribute(field);
-
-                        yield break;
-                    }
-
-                    if (!AreAnyNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
-                        ReportArrayIsMissingSizeArgument(field);
-
-                        yield break;
-                    }
-
-                    if (AreAllNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
-                        ReportArrayHasConflictingSizeArguments(field);
-
-                        yield break;
-                    }
-
-                    if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
-                        var statements = GetReadStatementsForArrayWithSize(semantics, arrSymbol, outputName, field.Name, (int)arrSize.Value!);
-
-                        foreach (var statement in statements) {
-                            yield return statement;
-                        }
-                    }
-
-                    if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
-                        var statements = GetReadStatementsForArrayWithMember(semantics, arrSymbol, outputName, field.Name, (string)sizeMember.Value!);
-
-                        foreach (var statement in statements) {
-                            yield return statement;
-                        }
-                    }
-
-                    continue;
-                }
-
-                if (HasBinarySerializableAttribute(fieldType)) {
-                    yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
-
-                    Debug.WriteLine("Built statements for nested object");
-                } else {
-                    ReportUnmarkedSerializableForField(field);
+                var binaryArrayAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "BinaryArrayAttribute");
+                if (binaryArrayAttr is null) {
+                    ReportArrayIsMissingAttribute(field);
 
                     yield break;
                 }
+
+                if (!AreAnyNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
+                    ReportArrayIsMissingSizeArgument(field);
+
+                    yield break;
+                }
+
+                if (AreAllNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
+                    ReportArrayHasConflictingSizeArguments(field);
+
+                    yield break;
+                }
+
+                if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
+                    var statements = GetReadStatementsForArrayWithSize(semantics, arrSymbol, outputName, field.Name, (int)arrSize.Value!);
+
+                    foreach (var statement in statements) {
+                        yield return statement;
+                    }
+                }
+
+                if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
+                    var statements = GetReadStatementsForArrayWithMember(semantics, arrSymbol, outputName, field.Name, (string)sizeMember.Value!);
+
+                    foreach (var statement in statements) {
+                        yield return statement;
+                    }
+                }
+
+                continue;
+            }
+
+            if (HasBinarySerializableAttribute(fieldType)) {
+                yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
+
+                Debug.WriteLine("Built statements for nested object");
+            } else {
+                ReportUnmarkedSerializableForField(field);
+
+                yield break;
             }
         }
     }
