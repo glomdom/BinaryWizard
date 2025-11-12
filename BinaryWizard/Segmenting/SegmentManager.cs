@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BinaryWizard.Model;
 
@@ -24,6 +25,8 @@ sealed internal class SegmentManager {
         if (_currentFields.Count == 0) {
             return;
         }
+
+        Debug.WriteLine($"Committing fixed segment with {_currentFields.Count} segments and size of {_currentFixedSize} bytes");
 
         _segments.Add(new FixedSegment(_currentFields.ToList(), _currentFixedSize));
         _currentFields.Clear();
