@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -87,6 +88,8 @@ public class Generator : IIncrementalGenerator {
     }
 
     private void GenerateCode(Compilation compilation, ImmutableArray<TypeDeclarationSyntax> classDeclarations) {
+        Debug.WriteLine("Starting code generation");
+
         foreach (var declarationSyntax in classDeclarations) {
             var semanticModel = compilation.GetSemanticModel(declarationSyntax.SyntaxTree);
             if (ModelExtensions.GetDeclaredSymbol(semanticModel, declarationSyntax) is not INamedTypeSymbol classSymbol) continue;
@@ -95,6 +98,8 @@ public class Generator : IIncrementalGenerator {
             var declarationName = declarationSyntax.Identifier.Text;
 
             var method = CreateReadMethod(semanticModel, classSymbol);
+
+            Debug.WriteLine($"Created read method for {classSymbol.Name}");
 
             TypeDeclarationSyntax declaration = declarationSyntax is ClassDeclarationSyntax
                 ? SyntaxFactory.ClassDeclaration(declarationName)
@@ -191,6 +196,8 @@ public class Generator : IIncrementalGenerator {
 
                 if (HasBinarySerializableAttribute(fieldType)) {
                     yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = {fieldType.Name}.FromBinary(reader);");
+
+                    Debug.WriteLine("Built statements for nested object");
                 } else {
                     ReportUnmarkedSerializableForField(field);
 
@@ -206,6 +213,8 @@ public class Generator : IIncrementalGenerator {
         string fieldName,
         string memberName
     ) {
+        Debug.WriteLine("Building statements for array with size variable");
+
         var elemType = fieldType.ElementType;
 
         if (IsPrimitiveLike(elemType)) {
@@ -226,6 +235,8 @@ public class Generator : IIncrementalGenerator {
     }
 
     private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithSize(SemanticModel semantics, IArrayTypeSymbol fieldType, string outName, string fieldName, int arrSize) {
+        Debug.WriteLine("Building statements for array with constant size");
+
         var elemType = fieldType.ElementType;
 
         // little optimization for bytes
