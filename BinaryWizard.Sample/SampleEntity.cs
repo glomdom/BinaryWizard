@@ -20,10 +20,11 @@ namespace BinaryWizard.Sample;
 public partial class SampleEntity {
     public int VectorCount;
 
-    [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
-
-    [BinaryArray(SizeMember = nameof(VectorCount))]
-    public SampleVector[] DynamicSizeVectors;
+    [BinaryArray(Size = 2)] public int[] ConstantInts;
+    // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
+    //
+    // [BinaryArray(SizeMember = nameof(VectorCount))]
+    // public SampleVector[] DynamicSizeVectors;
 }
 
 [BinarySerializable]
