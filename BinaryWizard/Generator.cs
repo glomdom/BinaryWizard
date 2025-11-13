@@ -116,6 +116,7 @@ public class Generator : IIncrementalGenerator {
                 .AddMembers(clazz);
 
             var unit = SyntaxFactory.CompilationUnit()
+                .AddUsings([SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System"))])
                 .AddMembers(ns);
 
             var firstToken = unit.GetFirstToken();
@@ -224,6 +225,15 @@ public class Generator : IIncrementalGenerator {
         }
 
         var segments = _segmentManager.Commit();
+
+        foreach (var seg in segments) {
+            if (seg is not FixedSegment fixedSegment) continue;
+
+            yield return SyntaxFactory.ParseStatement($"Span<byte> buf = stackalloc byte[{fixedSegment.Bytes}];");
+            yield return SyntaxFactory.ParseStatement("reader.Read(buf);");
+
+            yield break;
+        }
     }
 
     private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithMember(SemanticModel semantics,
