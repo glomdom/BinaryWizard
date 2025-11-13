@@ -23,6 +23,10 @@ public sealed record FieldDef {
     public int ByteSize { get; set; }
     public TypeModel TypeModel { get; set; }
 
+    // array-specific
+    public int ArraySize { get; set; }
+    public bool IsArray => ArraySize != -1;
+
     public bool IsDynamic => ByteSize == -1;
 
     public FieldDef(string name, ITypeSymbol type) {
