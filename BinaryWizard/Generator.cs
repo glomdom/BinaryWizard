@@ -190,7 +190,7 @@ public class Generator : IIncrementalGenerator {
                 if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
                     var arrSizeValue = (int)arrSize.Value!;
                     fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
-                    fieldDef.ArraySize = arrSizeValue;
+                    fieldDef.TypeModel.FixedArraySize = arrSizeValue;
 
                     var statements = GetReadStatementsForArrayWithSize(semantics, arrSymbol, outputName, field.Name, arrSizeValue);
 
