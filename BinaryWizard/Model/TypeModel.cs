@@ -18,15 +18,10 @@ using Microsoft.CodeAnalysis;
 
 namespace BinaryWizard.Model;
 
-public sealed record FieldDef {
-    public string Name { get; set; }
-    public int ByteSize { get; set; }
-    public TypeModel TypeModel { get; set; }
+public sealed record TypeModel {
+    public ITypeSymbol Type;
 
-    public bool IsDynamic => ByteSize == -1;
-
-    public FieldDef(string name, ITypeSymbol type) {
-        Name = name;
-        TypeModel = new TypeModel(type);
+    public TypeModel(ITypeSymbol type) {
+        Type = type;
     }
 }

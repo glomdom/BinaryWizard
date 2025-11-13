@@ -152,13 +152,13 @@ public class Generator : IIncrementalGenerator {
             var fieldType = field.Type;
 
             if (IsPrimitiveLike(fieldType)) {
-                var fieldDef = new FieldDef(field.Name) {
+                var fieldDef = new FieldDef(field.Name, fieldType) {
                     ByteSize = GetByteSizeForPrimitive(fieldType),
                 };
 
                 _segmentManager.AddField(fieldDef);
 
-                Debug.WriteLine($"Created field definition for {field.Name} with byte size {fieldDef.ByteSize}. Dynamic = {fieldDef.IsDynamic}");
+                DebugUtilities.CreatedFieldDef(fieldDef);
 
                 var method = GetReadMethodNameForPrimitive(fieldType);
 
@@ -185,7 +185,7 @@ public class Generator : IIncrementalGenerator {
                     yield break;
                 }
 
-                var fieldDef = new FieldDef(fieldType.Name);
+                var fieldDef = new FieldDef(field.Name, fieldType);
 
                 if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
                     var arrSizeValue = (int)arrSize.Value!;
@@ -206,7 +206,7 @@ public class Generator : IIncrementalGenerator {
                     }
                 }
 
-                Debug.WriteLine($"Created field definition for {field.Name} with byte size {fieldDef.ByteSize}. Dynamic = {fieldDef.IsDynamic}");
+                DebugUtilities.CreatedFieldDef(fieldDef);
 
                 _segmentManager.AddField(fieldDef);
             } else if (HasBinarySerializableAttribute(fieldType)) {
