@@ -19,9 +19,13 @@ using Microsoft.CodeAnalysis;
 namespace BinaryWizard.Model;
 
 public sealed record TypeModel {
-    public ITypeSymbol Type;
+    public ITypeSymbol Type { get; set; }
 
-    public TypeModel(ITypeSymbol type) {
+    public int? FixedArraySize { get; set; }
+    public bool IsArray => FixedArraySize is not null;
+
+    public TypeModel(ITypeSymbol type, int? fixedArraySize = null) {
         Type = type;
+        FixedArraySize = fixedArraySize;
     }
 }
