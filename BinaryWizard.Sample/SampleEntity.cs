@@ -27,9 +27,9 @@ public partial class SampleEntity {
     // public SampleVector[] DynamicSizeVectors;
 }
 
-[BinarySerializable]
-public partial class SampleVector {
-    public int X;
-    public int Y;
-    public int Z;
-}
+// [BinarySerializable]
+// public partial class SampleVector {
+//     public int X;
+//     public int Y;
+//     public int Z;
+// }
