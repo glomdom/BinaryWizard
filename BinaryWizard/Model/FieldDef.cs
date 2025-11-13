@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025 glomdom
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Sample;
+using Microsoft.CodeAnalysis;
 
-[BinarySerializable]
-public partial class SampleEntity {
-    public int VectorCount;
+namespace BinaryWizard.Model;
 
-    [BinaryArray(Size = 2)] public int[] ConstantInts;
-    // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
-    //
-    // [BinaryArray(SizeMember = nameof(VectorCount))]
-    // public SampleVector[] DynamicSizeVectors;
+public sealed record FieldDef {
+    public string Name { get; set; }
+    public int ByteSize { get; set; }
+    public TypeModel TypeModel { get; set; }
+
+    public bool IsDynamic => ByteSize == -1;
+
+    public FieldDef(string name, ITypeSymbol type) {
+        Name = name;
+        TypeModel = new TypeModel(type);
+    }
 }
-
-// [BinarySerializable]
-// public partial class SampleVector {
-//     public int X;
-//     public int Y;
-//     public int Z;
-// }
