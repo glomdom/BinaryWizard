@@ -20,7 +20,7 @@ namespace BinaryWizard.Sample;
 public partial class SampleEntity {
     public int IntegersCount;
 
-    [BinaryArray(Size = 2)] public int[] ConstantInts;
+    // [BinaryArray(Size = 2)] public int[] ConstantInts;
     // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
     //
     [BinaryArray(SizeMember = nameof(IntegersCount))]
