@@ -50,4 +50,10 @@ sealed internal class SegmentManager {
         _currentFields.Clear();
         _currentFixedSize = 0;
     }
+
+    public void Clear() {
+        _segments.Clear();
+        _currentFields.Clear();
+        _currentFixedSize = 0;
+    }
 }
