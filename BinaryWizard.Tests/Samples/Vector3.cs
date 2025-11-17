@@ -16,7 +16,7 @@
 
 namespace BinaryWizard.Tests.Samples;
 
-[BinarySerializable]
+// [BinarySerializable]
 public partial struct Vector3 {
     public int X;
     public int Y;
