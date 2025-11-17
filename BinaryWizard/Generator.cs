@@ -222,7 +222,7 @@ public class Generator : IIncrementalGenerator {
             if (seg is not FixedSegment fixedSegment) continue;
 
             yield return SyntaxFactory.ParseStatement($"Span<byte> buf = stackalloc byte[{fixedSegment.Bytes}];");
-            yield return SyntaxFactory.ParseStatement("var __bytes_read = reader.Read(buf);");
+            yield return SyntaxFactory.ParseStatement($"var __bytes_read = reader.Read(buf, 0, {fixedSegment.Bytes});");
             yield return SyntaxFactory.ParseStatement($"if (__bytes_read < {fixedSegment.Bytes}) throw new EndOfStreamException();");
 
             var offsetInBytes = 0;
