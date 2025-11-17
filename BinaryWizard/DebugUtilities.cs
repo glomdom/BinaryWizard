@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025 glomdom
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Sample;
+using System.Diagnostics;
+using BinaryWizard.Model;
 
-[BinarySerializable]
-public partial class SampleEntity {
-    public int VectorCount;
+namespace BinaryWizard;
 
-    [BinaryArray(Size = 2)] public int[] ConstantInts;
-    // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
-    //
-    // [BinaryArray(SizeMember = nameof(VectorCount))]
-    // public SampleVector[] DynamicSizeVectors;
+public static class DebugUtilities {
+    [Conditional("DEBUG")]
+    public static void CreatedFieldDef(FieldDef def) {
+        Debug.WriteLine($"Created field definition {def.Name} of {def.TypeModel.Type} ({def.ByteSize} bytes) (dynamic? {def.IsDynamic})");
+    }
 }
-
-// [BinarySerializable]
-// public partial class SampleVector {
-//     public int X;
-//     public int Y;
-//     public int Z;
-// }

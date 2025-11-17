@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025 glomdom
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Sample;
+namespace BinaryWizard.Segmenting;
 
-[BinarySerializable]
-public partial class SampleEntity {
-    public int VectorCount;
-
-    [BinaryArray(Size = 2)] public int[] ConstantInts;
-    // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
-    //
-    // [BinaryArray(SizeMember = nameof(VectorCount))]
-    // public SampleVector[] DynamicSizeVectors;
-}
-
-// [BinarySerializable]
-// public partial class SampleVector {
-//     public int X;
-//     public int Y;
-//     public int Z;
-// }
+public abstract record Segment;
