@@ -112,6 +112,7 @@ public class Generator : IIncrementalGenerator {
             var unit = SyntaxFactory.CompilationUnit()
                 .AddUsings(
                     SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System")),
+                    SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System.IO")),
                     SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System.Buffers.Binary"))
                 )
                 .AddMembers(ns);
@@ -221,7 +222,8 @@ public class Generator : IIncrementalGenerator {
             if (seg is not FixedSegment fixedSegment) continue;
 
             yield return SyntaxFactory.ParseStatement($"Span<byte> buf = stackalloc byte[{fixedSegment.Bytes}];");
-            yield return SyntaxFactory.ParseStatement("reader.Read(buf);");
+            yield return SyntaxFactory.ParseStatement("var __bytes_read = reader.Read(buf);");
+            yield return SyntaxFactory.ParseStatement($"if (__bytes_read < {fixedSegment.Bytes}) throw new EndOfStreamException();");
 
             var offsetInBytes = 0;
             foreach (var field in fixedSegment.Fields) {
@@ -235,7 +237,7 @@ public class Generator : IIncrementalGenerator {
                 }
 
                 yield return SyntaxFactory.ParseStatement(
-                    $"result.{field.Name} = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes}, {offsetInBytes + field.ByteSize}));"
+                    $"result.{field.Name} = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes}, {field.ByteSize}));"
                 );
 
                 offsetInBytes += field.ByteSize;
