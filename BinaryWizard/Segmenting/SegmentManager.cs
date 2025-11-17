@@ -28,7 +28,7 @@ sealed internal class SegmentManager {
 
     public void AddField(FieldDef field) {
         _currentFields.Add(field);
-        _currentFixedSize += field.TypeModel.IsArray ? field.TypeModel.FixedArraySize!.Value * field.ByteSize : field.ByteSize;
+        _currentFixedSize += field.TypeModel.IsArray ? field.TypeModel.FixedArraySize!.Value * field.TypeModel.InnerTypeByteSize!.Value : field.ByteSize;
     }
 
     public IReadOnlyList<Segment> Commit() {

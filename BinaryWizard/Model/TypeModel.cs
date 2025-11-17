@@ -21,8 +21,10 @@ namespace BinaryWizard.Model;
 public sealed record TypeModel {
     public ITypeSymbol Type { get; set; }
 
+    public ITypeSymbol? InnerType { get; set; }
     public int? FixedArraySize { get; set; }
-    public bool IsArray => FixedArraySize is not null;
+    public int? InnerTypeByteSize { get; set; }
+    public bool IsArray => FixedArraySize is not null && InnerType is not null && InnerTypeByteSize is not null;
 
     public TypeModel(ITypeSymbol type, int? fixedArraySize = null) {
         Type = type;

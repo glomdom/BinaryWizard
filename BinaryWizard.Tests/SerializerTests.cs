@@ -34,7 +34,29 @@ public class SerializerTests {
         using var reader = new BinaryReader(stream);
 
         var actual = Vector3.FromBinary(reader);
-        var expected = new Vector3 { X = 1, Y = 2, Z = 3 };
+        var expected = new Vector3 {
+            X = 1, Y = 2, Z = 3,
+        };
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void Arrays_CorrectlySerialized() {
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true)) {
+            for (var i = 0; i < 16; i++) {
+                writer.Write(i);
+            }
+        }
+
+        stream.Position = 0;
+
+        using var reader = new BinaryReader(stream);
+        var actual = Arrays.FromBinary(reader);
+        var expected = new Arrays {
+            NumberArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+        };
 
         Assert.Equal(expected, actual);
     }
