@@ -184,12 +184,14 @@ public class Generator : IIncrementalGenerator {
                     yield break;
                 }
 
-                var fieldDef = new FieldDef(field.Name, fieldType);
+                var fieldDef = new FieldDef(field.Name, arrSymbol.ElementType);
 
                 if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
                     var arrSizeValue = (int)arrSize.Value!;
                     fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
                     fieldDef.TypeModel.FixedArraySize = arrSizeValue;
+                    fieldDef.TypeModel.InnerType = arrSymbol.ElementType;
+                    fieldDef.TypeModel.InnerTypeByteSize = GetByteSizeForPrimitive(arrSymbol.ElementType);
                 } else if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
                     // TODO: dynamic segments
 
@@ -228,8 +230,13 @@ public class Generator : IIncrementalGenerator {
             var offsetInBytes = 0;
             foreach (var field in fixedSegment.Fields) {
                 if (field.TypeModel.IsArray) {
+                    var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
+
+                    yield return SyntaxFactory.ParseStatement($"result.{field.Name} = new {field.TypeModel.Type.Name}[{field.TypeModel.FixedArraySize!.Value}];");
+                    
                     yield return SyntaxFactory.ParseStatement(
-                        $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++) result.{field.Name}[i] = buf.Slice({offsetInBytes} + ({field.ByteSize} * i), {field.ByteSize});"
+                        $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++)" + " " +
+                        $"result.{field.Name}[i] = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes} + ({elementBytes} * i), {elementBytes}));"
                     );
 
                     offsetInBytes += field.TypeModel.FixedArraySize!.Value;
