@@ -229,9 +229,10 @@ public class Generator : IIncrementalGenerator {
             foreach (var field in fixedSegment.Fields) {
                 if (field.TypeModel.IsArray) {
                     yield return SyntaxFactory.ParseStatement(
-                        $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++) result.{field.Name}[i] = buf.Slice({offsetInBytes} + (i * 4), {offsetInBytes} + (i * 4) + (i * 4));");
+                        $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++) result.{field.Name}[i] = buf.Slice({offsetInBytes} + ({field.ByteSize} * i), {field.ByteSize});"
+                    );
 
-                    offsetInBytes += field.TypeModel.FixedArraySize!.Value * 4;
+                    offsetInBytes += field.TypeModel.FixedArraySize!.Value;
 
                     continue;
                 }
