@@ -1,6 +1,6 @@
 ﻿namespace BinaryWizard.Tests.Samples;
 
-[BinarySerializable]
+// [BinarySerializable]
 public partial struct Entity {
     public int Id;
     public string Name;
