@@ -66,9 +66,7 @@ public class Generator : IIncrementalGenerator {
 
         context.RegisterSourceOutput(
             sources,
-            (spc, t) => {
-                GenerateCode(spc, t.Left, t.Right);
-            }
+            (spc, t) => { GenerateCode(spc, t.Left, t.Right); }
         );
     }
 
@@ -96,7 +94,6 @@ public class Generator : IIncrementalGenerator {
             var declarationName = declarationSyntax.Identifier.Text;
 
             var segmentManager = new SegmentManager();
-            
             var method = CreateReadMethod(spc, segmentManager, semanticModel, classSymbol);
 
             Debug.WriteLine($"Created read method for {classSymbol.Name}");
@@ -146,7 +143,12 @@ public class Generator : IIncrementalGenerator {
         return method;
     }
 
-    private IEnumerable<StatementSyntax> BuildReadStatements(SourceProductionContext spc, SegmentManager segmentManager, SemanticModel semantics, INamedTypeSymbol classSymbol, string outputName) {
+    private IEnumerable<StatementSyntax> BuildReadStatements(SourceProductionContext spc,
+        SegmentManager segmentManager,
+        SemanticModel semantics,
+        INamedTypeSymbol classSymbol,
+        string outputName
+    ) {
         var fields = classSymbol.GetMembers().OfType<IFieldSymbol>();
 
         foreach (var field in fields) {
@@ -158,12 +160,7 @@ public class Generator : IIncrementalGenerator {
                 };
 
                 segmentManager.AddField(fieldDef);
-
                 DebugUtilities.CreatedFieldDef(fieldDef);
-
-                var method = GetReadMethodNameForPrimitive(fieldType);
-
-                yield return SyntaxFactory.ParseStatement($"{outputName}.{field.Name} = reader.{method}();");
             } else if (IsArrayLike(fieldType, out var arrSymbol)) {
                 if (arrSymbol.Rank != 1) throw new NotSupportedException("Arrays which have more than 1 dimension are not supported.");
 
@@ -192,16 +189,10 @@ public class Generator : IIncrementalGenerator {
                     var arrSizeValue = (int)arrSize.Value!;
                     fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
                     fieldDef.TypeModel.FixedArraySize = arrSizeValue;
-
-                    var statements = GetReadStatementsForArrayWithSize(semantics, arrSymbol, outputName, field.Name, arrSizeValue);
-
-                    foreach (var statement in statements) {
-                        yield return statement;
-                    }
                 } else if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
                     // TODO: dynamic segments
 
-                    var statements = GetReadStatementsForArrayWithMember(semantics, arrSymbol, outputName, field.Name, (string)sizeMember.Value!);
+                    var statements = GetReadStatementsForArrayWithMember(arrSymbol, outputName, field.Name, (string)sizeMember.Value!);
 
                     foreach (var statement in statements) {
                         yield return statement;
@@ -235,13 +226,14 @@ public class Generator : IIncrementalGenerator {
             var offsetInBytes = 0;
             foreach (var field in fixedSegment.Fields) {
                 if (field.TypeModel.IsArray) {
-                    yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++) result.{field.Name}[i] = buf.Slice({offsetInBytes} + (i * 4), {offsetInBytes} + (i * 4) + (i * 4));");
+                    yield return SyntaxFactory.ParseStatement(
+                        $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++) result.{field.Name}[i] = buf.Slice({offsetInBytes} + (i * 4), {offsetInBytes} + (i * 4) + (i * 4));");
 
                     offsetInBytes += field.TypeModel.FixedArraySize!.Value * 4;
 
                     continue;
                 }
-                
+
                 yield return SyntaxFactory.ParseStatement(
                     $"result.{field.Name} = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes}, {offsetInBytes + field.ByteSize}));"
                 );
@@ -266,7 +258,7 @@ public class Generator : IIncrementalGenerator {
         };
     }
 
-    private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithMember(SemanticModel semantics,
+    private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithMember(
         IArrayTypeSymbol fieldType,
         string outName,
         string fieldName,
@@ -285,34 +277,6 @@ public class Generator : IIncrementalGenerator {
 
         if (HasBinarySerializableAttribute(elemType)) {
             yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {outName}.{memberName}; i++) {outName}.{fieldName}[i] = {elemType.Name}.FromBinary(reader);");
-
-            yield break;
-        }
-
-        // idk what to do here, still don't know if we can reach this
-        throw new NotSupportedException($"Failed to create read statements for `{elemType}`");
-    }
-
-    private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithSize(SemanticModel semantics, IArrayTypeSymbol fieldType, string outName, string fieldName, int arrSize) {
-        Debug.WriteLine("Building statements for array with constant size");
-
-        var elemType = fieldType.ElementType;
-
-        // little optimization for bytes
-        if (elemType.SpecialType == SpecialType.System_Byte) {
-            yield return SyntaxFactory.ParseStatement($"{outName}.{fieldName} = reader.ReadBytes({arrSize});");
-
-            yield break;
-        }
-
-        if (IsPrimitiveLike(elemType)) {
-            yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = reader.{GetReadMethodNameForPrimitive(elemType)}();");
-
-            yield break;
-        }
-
-        if (HasBinarySerializableAttribute(elemType)) {
-            yield return SyntaxFactory.ParseStatement($"for (var i = 0; i < {arrSize}; i++) {outName}.{fieldName}[i] = {elemType.Name}.FromBinary(reader);");
 
             yield break;
         }
