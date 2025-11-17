@@ -116,7 +116,10 @@ public class Generator : IIncrementalGenerator {
                 .AddMembers(clazz);
 
             var unit = SyntaxFactory.CompilationUnit()
-                .AddUsings([SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System"))])
+                .AddUsings(
+                    SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System")),
+                    SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System.Buffers.Binary"))
+                )
                 .AddMembers(ns);
 
             var firstToken = unit.GetFirstToken();
@@ -232,8 +235,30 @@ public class Generator : IIncrementalGenerator {
             yield return SyntaxFactory.ParseStatement($"Span<byte> buf = stackalloc byte[{fixedSegment.Bytes}];");
             yield return SyntaxFactory.ParseStatement("reader.Read(buf);");
 
+            var offsetInBytes = 0;
+            foreach (var field in fixedSegment.Fields) {
+                yield return SyntaxFactory.ParseStatement(
+                    $"result.{field.Name} = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes}, {offsetInBytes + field.ByteSize}));"
+                );
+
+                offsetInBytes += field.ByteSize;
+            }
+
             yield break;
         }
+
+        _segmentManager.Clear();
+    }
+
+    // TODO: Context is required if we want to support endianness.
+    private string GetBinaryPrimitiveReaderForPrimitive(ITypeSymbol sym) {
+        return sym.SpecialType switch {
+            SpecialType.System_Int32 => "BinaryPrimitives.ReadInt32LittleEndian",
+
+            _ => throw new InvalidOperationException(
+                $"Unexpected type {sym.SpecialType} occurred in GetBinaryPrimitiveReaderForPrimitive"
+            ),
+        };
     }
 
     private IEnumerable<StatementSyntax> GetReadStatementsForArrayWithMember(SemanticModel semantics,
