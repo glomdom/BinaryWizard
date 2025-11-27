@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Sample;
+using System.Collections.Generic;
+using BinaryWizard.Model;
 
-[BinarySerializable]
-public partial class SampleEntity {
-    public int IntegersCount;
+namespace BinaryWizard.Segmenting;
 
-    [BinaryArray(Size = 2)] public int[] ConstantInts;
-    // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
-    //
-    [BinaryArray(SizeMember = nameof(IntegersCount))]
-    public int[] DynamicSizeVectors;
+public record DynamicSegment : Segment {
+    public IReadOnlyList<FieldDef> Fields { get; set; }
+    public string LengthReferenceFieldName { get; }
+        
+    public DynamicSegment(List<FieldDef> fields, string lengthRef) {
+        Fields = fields;
+        LengthReferenceFieldName = lengthRef;
+    }
 }
-
-// [BinarySerializable]
-// public partial class SampleVector {
-//     public int X;
-//     public int Y;
-//     public int Z;
-// }

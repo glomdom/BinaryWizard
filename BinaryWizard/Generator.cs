@@ -184,27 +184,27 @@ public class Generator : IIncrementalGenerator {
                     yield break;
                 }
 
-                var fieldDef = new FieldDef(field.Name, arrSymbol.ElementType);
+                var fieldDef = new FieldDef(field.Name, arrSymbol.ElementType) {
+                    TypeModel = {
+                        InnerType = arrSymbol.ElementType,
+                        InnerTypeByteSize = GetByteSizeForPrimitive(arrSymbol.ElementType),
+                    },
+                };
 
                 if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
                     var arrSizeValue = (int)arrSize.Value!;
                     fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
                     fieldDef.TypeModel.FixedArraySize = arrSizeValue;
-                    fieldDef.TypeModel.InnerType = arrSymbol.ElementType;
-                    fieldDef.TypeModel.InnerTypeByteSize = GetByteSizeForPrimitive(arrSymbol.ElementType);
+                    
+                    DebugUtilities.CreatedFieldDef(fieldDef);
+                    segmentManager.AddField(fieldDef);
                 } else if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
-                    // TODO: dynamic segments
-
-                    var statements = GetReadStatementsForArrayWithMember(arrSymbol, outputName, field.Name, (string)sizeMember.Value!);
-
-                    foreach (var statement in statements) {
-                        yield return statement;
-                    }
+                    var arrSizeRef = (string)sizeMember.Value!;
+                    fieldDef.ByteSize = -1;
+                    
+                    DebugUtilities.CreatedFieldDef(fieldDef);
+                    segmentManager.AddField(fieldDef, arrSizeRef);
                 }
-
-                DebugUtilities.CreatedFieldDef(fieldDef);
-
-                segmentManager.AddField(fieldDef);
             } else if (HasBinarySerializableAttribute(fieldType)) {
                 // TODO: maybe implement segmenting for nested reading? unsure of how to implement yet
 
@@ -229,7 +229,7 @@ public class Generator : IIncrementalGenerator {
 
             var offsetInBytes = 0;
             foreach (var field in fixedSegment.Fields) {
-                if (field.TypeModel.IsArray) {
+                if (field.TypeModel.IsFixedArray) {
                     var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
 
                     yield return SyntaxFactory.ParseStatement($"result.{field.Name} = new {field.TypeModel.Type}[{field.TypeModel.FixedArraySize!.Value}];");
@@ -238,7 +238,7 @@ public class Generator : IIncrementalGenerator {
                         $"result.{field.Name}[i] = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes} + ({elementBytes} * i), {elementBytes}));"
                     );
 
-                    offsetInBytes += field.TypeModel.FixedArraySize!.Value;
+                    offsetInBytes += elementBytes * field.TypeModel.FixedArraySize!.Value;
 
                     continue;
                 }
