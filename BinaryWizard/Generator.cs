@@ -18,17 +18,17 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using BinaryWizard.Model;
+using BinaryWizard.Segmenting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System.Diagnostics.CodeAnalysis;
-using BinaryWizard.Model;
-using BinaryWizard.Segmenting;
 
 namespace BinaryWizard;
 
