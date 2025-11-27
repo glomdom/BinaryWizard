@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -26,9 +27,24 @@ sealed internal class SegmentManager {
     private readonly List<FieldDef> _currentFields = [];
     private int _currentFixedSize;
 
-    public void AddField(FieldDef field) {
-        _currentFields.Add(field);
-        _currentFixedSize += field.TypeModel.IsArray ? field.TypeModel.FixedArraySize!.Value * field.TypeModel.InnerTypeByteSize!.Value : field.ByteSize;
+    public void AddField(FieldDef field, string? lengthRef = null) {
+        if (field.IsDynamic) {
+            if (string.IsNullOrEmpty(lengthRef)) throw new ArgumentNullException(nameof(lengthRef), "Length reference was not provided when field is dynamic");
+            
+            CommitFixed();
+            
+            _segments.Add(new DynamicSegment([field], lengthRef!));
+            
+            Debug.WriteLine($"Added dynamic segment for {field.Name} (dep. {lengthRef})");
+        } else {
+            _currentFields.Add(field);
+            
+            var size = field.TypeModel.IsFixedArray
+                ? field.TypeModel.FixedArraySize!.Value * field.TypeModel.InnerTypeByteSize!.Value
+                : field.ByteSize;
+
+            _currentFixedSize += size;
+        }
     }
 
     public IReadOnlyList<Segment> Commit() {
@@ -45,7 +61,7 @@ sealed internal class SegmentManager {
         }
 
         Debug.WriteLine($"Committing fixed segment with {_currentFields.Count} segments and size of {_currentFixedSize} bytes");
-
+    
         _segments.Add(new FixedSegment(_currentFields.ToList(), _currentFixedSize));
         _currentFields.Clear();
         _currentFixedSize = 0;

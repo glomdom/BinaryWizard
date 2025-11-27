@@ -24,7 +24,8 @@ public sealed record TypeModel {
     public ITypeSymbol? InnerType { get; set; }
     public int? FixedArraySize { get; set; }
     public int? InnerTypeByteSize { get; set; }
-    public bool IsArray => FixedArraySize is not null && InnerType is not null && InnerTypeByteSize is not null;
+    public bool IsFixedArray => FixedArraySize is not null && InnerType is not null;
+    public bool IsDynamicArray => FixedArraySize is null && InnerType is not null;
 
     public TypeModel(ITypeSymbol type, int? fixedArraySize = null) {
         Type = type;
