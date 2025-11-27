@@ -60,7 +60,7 @@ public class Generator : IIncrementalGenerator {
                 (s, _) => s is ClassDeclarationSyntax or StructDeclarationSyntax,
                 (ctx, _) => GetTypeDeclarationForSourceGen(ctx))
             .Where(t => t.reportAttributeFound)
-            .Select((t, _) => t.Item1);
+            .Select((t, _) => t.syntax);
 
         var sources = context.CompilationProvider.Combine(provider.Collect());
 
