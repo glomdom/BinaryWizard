@@ -70,7 +70,7 @@ public class Generator : IIncrementalGenerator {
         );
     }
 
-    private static (TypeDeclarationSyntax, bool reportAttributeFound) GetTypeDeclarationForSourceGen(GeneratorSyntaxContext context) {
+    private static (TypeDeclarationSyntax syntax, bool reportAttributeFound) GetTypeDeclarationForSourceGen(GeneratorSyntaxContext context) {
         var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
         foreach (var attributeSyntax in typeDeclaration.AttributeLists.SelectMany(list => list.Attributes)) {
