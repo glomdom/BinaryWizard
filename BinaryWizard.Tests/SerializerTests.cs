@@ -48,6 +48,12 @@ public class SerializerTests {
             for (var i = 0; i < 16; i++) {
                 writer.Write(i);
             }
+            
+            writer.Write(4);
+            
+            for (var i = 0; i < 4; i++) {
+                writer.Write(i);
+            }
         }
 
         stream.Position = 0;
@@ -56,9 +62,13 @@ public class SerializerTests {
         var actual = Arrays.FromBinary(reader);
         var expected = new Arrays {
             NumberArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+            OtherNumbersSize = 4,
+            OtherNumbers = [0, 1, 2, 3],
         };
 
         Assert.Equal(expected.NumberArray, actual.NumberArray);
+        Assert.Equal(expected.OtherNumbersSize, actual.OtherNumbersSize);
+        Assert.Equal(expected.OtherNumbers, actual.OtherNumbers);
     }
 
     // [Fact]
