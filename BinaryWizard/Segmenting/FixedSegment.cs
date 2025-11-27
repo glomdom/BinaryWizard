@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2025 glomdom
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Sample;
+using System.Collections.Generic;
+using BinaryWizard.Model;
 
-[BinarySerializable]
-public partial class SampleEntity {
-    public int IntegersCount;
+namespace BinaryWizard.Segmenting;
 
-    // [BinaryArray(Size = 2)] public int[] ConstantInts;
-    // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
-    //
-    [BinaryArray(SizeMember = nameof(IntegersCount))]
-    public int[] DynamicSizeVectors;
+public record FixedSegment : Segment {
+    public IReadOnlyList<FieldDef> Fields { get; set; }
+    public int Bytes { get; set; }
+
+    public FixedSegment(List<FieldDef> fields, int bytes) {
+        Fields = fields;
+        Bytes = bytes;
+    }
 }
-
-// [BinarySerializable]
-// public partial class SampleVector {
-//     public int X;
-//     public int Y;
-//     public int Z;
-// }
