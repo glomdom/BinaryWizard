@@ -87,6 +87,8 @@ public class Generator : IIncrementalGenerator {
         Debug.WriteLine("Starting code generation");
 
         foreach (var declarationSyntax in classDeclarations) {
+            var context = new Context();
+            
             var semanticModel = compilation.GetSemanticModel(declarationSyntax.SyntaxTree);
             if (ModelExtensions.GetDeclaredSymbol(semanticModel, declarationSyntax) is not INamedTypeSymbol classSymbol) continue;
 
@@ -94,7 +96,7 @@ public class Generator : IIncrementalGenerator {
             var declarationName = declarationSyntax.Identifier.Text;
 
             var segmentManager = new SegmentManager();
-            var method = CreateReadMethod(spc, segmentManager, semanticModel, classSymbol);
+            var method = CreateReadMethod(spc, context, segmentManager, semanticModel, classSymbol);
 
             Debug.WriteLine($"Created read method for {classSymbol.Name}");
 
@@ -126,11 +128,11 @@ public class Generator : IIncrementalGenerator {
         }
     }
 
-    private MethodDeclarationSyntax CreateReadMethod(SourceProductionContext spc, SegmentManager segmentManager, SemanticModel semantics, INamedTypeSymbol classSymbol) {
+    private MethodDeclarationSyntax CreateReadMethod(SourceProductionContext spc, Context ctx, SegmentManager segmentManager, SemanticModel semantics, INamedTypeSymbol classSymbol) {
         var initializer = SyntaxFactory.ParseStatement($"var result = new {classSymbol.Name}();");
         var ret = SyntaxFactory.ParseStatement("return result;");
 
-        var readStatements = BuildReadStatements(spc, segmentManager, semantics, classSymbol, "result").ToArray();
+        var readStatements = BuildReadStatements(spc, ctx, segmentManager, semantics, classSymbol, "result").ToArray();
         var methodBlock = SyntaxFactory.Block()
             .AddStatements(initializer)
             .AddStatements(readStatements)
@@ -145,6 +147,7 @@ public class Generator : IIncrementalGenerator {
     }
 
     private IEnumerable<StatementSyntax> BuildReadStatements(SourceProductionContext spc,
+        Context ctx,
         SegmentManager segmentManager,
         SemanticModel semantics,
         INamedTypeSymbol classSymbol,
@@ -221,39 +224,61 @@ public class Generator : IIncrementalGenerator {
         var segments = segmentManager.Commit();
 
         foreach (var seg in segments) {
-            if (seg is not FixedSegment fixedSegment) continue;
-
-            yield return SyntaxFactory.ParseStatement($"Span<byte> buf = stackalloc byte[{fixedSegment.Bytes}];");
-            yield return SyntaxFactory.ParseStatement($"var __bytes_read = reader.Read(buf);");
-            yield return SyntaxFactory.ParseStatement($"if (__bytes_read < {fixedSegment.Bytes}) throw new EndOfStreamException();");
-
-            var offsetInBytes = 0;
-            foreach (var field in fixedSegment.Fields) {
-                if (field.TypeModel.IsFixedArray) {
-                    var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
-
-                    yield return SyntaxFactory.ParseStatement($"result.{field.Name} = new {field.TypeModel.Type}[{field.TypeModel.FixedArraySize!.Value}];");
-                    yield return SyntaxFactory.ParseStatement(
-                        $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++)" + " " +
-                        $"result.{field.Name}[i] = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes} + ({elementBytes} * i), {elementBytes}));"
-                    );
-
-                    offsetInBytes += elementBytes * field.TypeModel.FixedArraySize!.Value;
-
-                    continue;
-                }
-
-                yield return SyntaxFactory.ParseStatement(
-                    $"result.{field.Name} = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({offsetInBytes}, {field.ByteSize}));"
-                );
-
-                offsetInBytes += field.ByteSize;
+            if (seg is FixedSegment fixedSeg) {
+                foreach (var stmt in ProcessFixedSegment(fixedSeg, ctx)) yield return stmt;
             }
 
-            yield break;
+            if (seg is DynamicSegment dynSeg) {
+                foreach (var stmt in ProcessDynamicSegment(dynSeg, ctx)) yield return stmt;
+            }
         }
 
         segmentManager.Clear();
+    }
+
+    private IEnumerable<StatementSyntax> ProcessDynamicSegment(DynamicSegment seg, Context ctx) {
+        foreach (var field in seg.Fields) {
+            var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
+
+            yield return SyntaxFactory.ParseStatement($"result.{field.Name} = new {field.TypeModel.Type}[result.{seg.LengthReferenceFieldName}];");
+            yield return SyntaxFactory.ParseStatement(
+                $"for (var i = 0; i < result.{seg.LengthReferenceFieldName}; i++)" +
+                " " +
+                $"result.{field.Name}[i] = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({ctx.Offset} + ({elementBytes} * i), {elementBytes}));"
+            );
+
+            // TODO: cannot add dynamic size to context. maybe be able to dynamically edit the context in the partial function
+            //       and be able to change from a fixed/dynamic type.
+            // ctx.Offset += elementBytes * field.TypeModel.FixedArraySize!.Value;
+        }
+    }
+
+    private IEnumerable<StatementSyntax> ProcessFixedSegment(FixedSegment seg, Context ctx) {
+        yield return SyntaxFactory.ParseStatement($"Span<byte> buf = stackalloc byte[{seg.Bytes}];");
+        yield return SyntaxFactory.ParseStatement($"var __bytes_read = reader.Read(buf);");
+        yield return SyntaxFactory.ParseStatement($"if (__bytes_read < {seg.Bytes}) throw new EndOfStreamException();");
+
+        foreach (var field in seg.Fields) {
+            if (field.TypeModel.IsFixedArray) {
+                var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
+
+                yield return SyntaxFactory.ParseStatement($"result.{field.Name} = new {field.TypeModel.Type}[{field.TypeModel.FixedArraySize!.Value}];");
+                yield return SyntaxFactory.ParseStatement(
+                    $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++)" + " " +
+                    $"result.{field.Name}[i] = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({ctx.Offset} + ({elementBytes} * i), {elementBytes}));"
+                );
+
+                ctx.Offset += elementBytes * field.TypeModel.FixedArraySize!.Value;
+
+                continue;
+            }
+
+            yield return SyntaxFactory.ParseStatement(
+                $"result.{field.Name} = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({ctx.Offset}, {field.ByteSize}));"
+            );
+
+            ctx.Offset += field.ByteSize;
+        }
     }
 
     // TODO: Context is required if we want to support endianness.
