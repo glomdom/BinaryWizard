@@ -88,7 +88,7 @@ public class Generator : IIncrementalGenerator {
 
         foreach (var declarationSyntax in classDeclarations) {
             var context = new Context();
-            
+
             var semanticModel = compilation.GetSemanticModel(declarationSyntax.SyntaxTree);
             if (ModelExtensions.GetDeclaredSymbol(semanticModel, declarationSyntax) is not INamedTypeSymbol classSymbol) continue;
 
@@ -128,7 +128,8 @@ public class Generator : IIncrementalGenerator {
         }
     }
 
-    private MethodDeclarationSyntax CreateReadMethod(SourceProductionContext spc, Context ctx, SegmentManager segmentManager, SemanticModel semantics, INamedTypeSymbol classSymbol) {
+    private MethodDeclarationSyntax CreateReadMethod(SourceProductionContext spc, Context ctx, SegmentManager segmentManager, SemanticModel semantics,
+        INamedTypeSymbol classSymbol) {
         var initializer = SyntaxFactory.ParseStatement($"var result = new {classSymbol.Name}();");
         var ret = SyntaxFactory.ParseStatement("return result;");
 
@@ -198,13 +199,13 @@ public class Generator : IIncrementalGenerator {
                     var arrSizeValue = (int)arrSize.Value!;
                     fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
                     fieldDef.TypeModel.FixedArraySize = arrSizeValue;
-                    
+
                     DebugUtilities.CreatedFieldDef(fieldDef);
                     segmentManager.AddField(fieldDef);
                 } else if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
                     var arrSizeRef = (string)sizeMember.Value!;
                     fieldDef.ByteSize = -1;
-                    
+
                     DebugUtilities.CreatedFieldDef(fieldDef);
                     segmentManager.AddField(fieldDef, arrSizeRef);
                 }
@@ -239,17 +240,19 @@ public class Generator : IIncrementalGenerator {
     private IEnumerable<StatementSyntax> ProcessDynamicSegment(DynamicSegment seg, Context ctx) {
         foreach (var field in seg.Fields) {
             var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
+            var bufferName = $"__{field.Name}_buf";
 
             yield return SyntaxFactory.ParseStatement($"result.{field.Name} = new {field.TypeModel.Type}[result.{seg.LengthReferenceFieldName}];");
-            yield return SyntaxFactory.ParseStatement(
-                $"for (var i = 0; i < result.{seg.LengthReferenceFieldName}; i++)" +
-                " " +
-                $"result.{field.Name}[i] = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({ctx.Offset} + ({elementBytes} * i), {elementBytes}));"
-            );
+            yield return SyntaxFactory.ParseStatement($"Span<byte> {bufferName} = stackalloc byte[{elementBytes}];");
 
-            // TODO: cannot add dynamic size to context. maybe be able to dynamically edit the context in the partial function
-            //       and be able to change from a fixed/dynamic type.
-            // ctx.Offset += elementBytes * field.TypeModel.FixedArraySize!.Value;
+            var loopCode = $$"""
+                             for (var i = 0; i < result.{{seg.LengthReferenceFieldName}}; i++) {
+                                     if (reader.Read({{bufferName}}) < {{elementBytes}}) throw new EndOfStreamException();
+                                     result.{{field.Name}}[i] = {{GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}}({{bufferName}});
+                                 }
+                             """;
+
+            yield return SyntaxFactory.ParseStatement(loopCode);
         }
     }
 
@@ -264,7 +267,8 @@ public class Generator : IIncrementalGenerator {
 
                 yield return SyntaxFactory.ParseStatement($"result.{field.Name} = new {field.TypeModel.Type}[{field.TypeModel.FixedArraySize!.Value}];");
                 yield return SyntaxFactory.ParseStatement(
-                    $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++)" + " " +
+                    $"for (var i = 0; i < {field.TypeModel.FixedArraySize}; i++)" +
+                    " " +
                     $"result.{field.Name}[i] = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}(buf.Slice({ctx.Offset} + ({elementBytes} * i), {elementBytes}));"
                 );
 

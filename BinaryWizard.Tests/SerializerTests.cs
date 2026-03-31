@@ -48,9 +48,9 @@ public class SerializerTests {
             for (var i = 0; i < 16; i++) {
                 writer.Write(i);
             }
-            
+
             writer.Write(4);
-            
+
             for (var i = 0; i < 4; i++) {
                 writer.Write(i);
             }
