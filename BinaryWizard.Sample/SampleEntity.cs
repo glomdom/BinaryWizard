@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 glomdom
+ * Copyright 2026 glomdom
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 namespace BinaryWizard.Sample;
 
 [BinarySerializable]
-public partial class SampleEntity {
+public partial struct SampleEntity {
     public int IntegersCount;
 
     // [BinaryArray(Size = 2)] public int[] ConstantInts;
@@ -26,10 +26,3 @@ public partial class SampleEntity {
     [BinaryArray(SizeMember = nameof(IntegersCount))]
     public int[] DynamicSizeVectors;
 }
-
-// [BinarySerializable]
-// public partial class SampleVector {
-//     public int X;
-//     public int Y;
-//     public int Z;
-// }
