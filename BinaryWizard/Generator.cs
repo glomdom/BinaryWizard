@@ -207,10 +207,10 @@ public class Generator : IIncrementalGenerator {
 
             sb.AppendLine($$"""
                             {{indent}}result.{{field.Name}} = new {{field.TypeModel.Type}}[result.{{seg.LengthReferenceFieldName}}];
-                            {{indent}}Span<byte> {{bufferName}} = stackalloc byte[{{elementBytes}}];
+                            {{indent}}Span<byte> {{bufferName}} = stackalloc byte[{{elementBytes}} * result.{{seg.LengthReferenceFieldName}}];
+                            {{indent}}if (reader.Read({{bufferName}}) < {{elementBytes}} * result.{{seg.LengthReferenceFieldName}}) throw new EndOfStreamException();
                             {{indent}}for (var i = 0; i < result.{{seg.LengthReferenceFieldName}}; i++) {
-                            {{indent}}    if (reader.Read({{bufferName}}) < {{elementBytes}}) throw new EndOfStreamException();
-                            {{indent}}    result.{{field.Name}}[i] = {{GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}}({{bufferName}});
+                            {{indent}}    result.{{field.Name}}[i] = {{GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}}({{bufferName}}.Slice(i * {{elementBytes}}, {{elementBytes}}));
                             {{indent}}}
                             """);
         }
