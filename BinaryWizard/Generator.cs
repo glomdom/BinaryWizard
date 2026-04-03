@@ -237,6 +237,7 @@ public class Generator : IIncrementalGenerator {
                                 """);
 
                 localOffset += elementBytes * field.TypeModel.FixedArraySize!.Value;
+
                 continue;
             }
 
@@ -246,9 +247,12 @@ public class Generator : IIncrementalGenerator {
         }
     }
 
+    // TODO: support type context, to know if its little endian or not.
     private string GetBinaryPrimitiveReaderForPrimitive(ITypeSymbol sym) {
         return sym.SpecialType switch {
             SpecialType.System_Int32 => "BinaryPrimitives.ReadInt32LittleEndian",
+            SpecialType.System_UInt32 => "BinaryPrimitives.ReadUInt32LittleEndian",
+            SpecialType.System_UInt16 => "BinaryPrimitives.ReadUInt16LittleEndian",
 
             _ => throw new InvalidOperationException(
                 $"Unexpected type {sym.SpecialType} occurred in GetBinaryPrimitiveReaderForPrimitive"
@@ -302,10 +306,12 @@ public class Generator : IIncrementalGenerator {
     private static bool IsArrayLike(ITypeSymbol symbol, [NotNullWhen(true)] out IArrayTypeSymbol? arraySymbol) {
         if (symbol is IArrayTypeSymbol arr) {
             arraySymbol = arr;
+
             return true;
         }
 
         arraySymbol = null;
+
         return false;
     }
 
@@ -324,10 +330,12 @@ public class Generator : IIncrementalGenerator {
     ) {
         foreach (var pair in attr.NamedArguments.Where(pair => pair.Key == name)) {
             typedConstant = pair.Value;
+
             return true;
         }
 
         typedConstant = default;
+
         return false;
     }
 

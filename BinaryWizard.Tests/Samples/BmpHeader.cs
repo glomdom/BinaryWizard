@@ -17,8 +17,9 @@
 namespace BinaryWizard.Tests.Samples;
 
 [BinarySerializable]
-public partial struct Entity {
-    public int Id;
-    // public string Name;
-    public Vector3 Position;
+public partial struct BmpHeader {
+    public ushort Signature;
+    public uint FileSize;
+    public uint Reserved;
+    public uint DataOffset;
 }
