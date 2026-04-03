@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-namespace BinaryWizard.Tests.Samples;
+using System;
 
-[BinarySerializable]
-public partial struct BmpHeader {
-    [Magic("BM")]
-    public ushort Signature;
-    public uint FileSize;
-    public uint Reserved;
-    public uint DataOffset;
+namespace BinaryWizard;
+
+/// <summary>
+/// Attribute which defines a field that requires a certain value. Short-circuits
+/// deserializing if it does not match.
+/// </summary>
+[AttributeUsage(AttributeTargets.Field)]
+public sealed class MagicAttribute : Attribute {
+    /// <summary>
+    /// The hex string of the magic expected.
+    /// </summary>
+    public string Magic { get; set; }
+
+    public MagicAttribute(string magic) {
+        Magic = magic;
+    }
 }

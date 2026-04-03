@@ -22,7 +22,7 @@ using BinaryWizard.Model;
 
 namespace BinaryWizard.Segmenting;
 
-sealed internal class SegmentManager {
+internal sealed class SegmentManager {
     private readonly List<Segment> _segments = [];
     private readonly List<FieldDef> _currentFields = [];
     private int _currentFixedSize;

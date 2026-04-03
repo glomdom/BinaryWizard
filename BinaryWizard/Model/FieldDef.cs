@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using System;
 using Microsoft.CodeAnalysis;
 
 namespace BinaryWizard.Model;
@@ -23,10 +24,16 @@ public sealed record FieldDef {
     public int ByteSize { get; set; }
     public TypeModel TypeModel { get; set; }
 
+    public bool HasMagic { get; set; }
+    public string Magic => HasMagic ? _magic! : throw new InvalidOperationException("Attempted to get magic when HasMagic is false.");
+
     public bool IsDynamic => ByteSize == -1;
 
-    public FieldDef(string name, ITypeSymbol type) {
+    private readonly string? _magic;
+
+    public FieldDef(string name, ITypeSymbol type, string? magic = null) {
         Name = name;
         TypeModel = new TypeModel(type);
+        _magic = magic;
     }
 }

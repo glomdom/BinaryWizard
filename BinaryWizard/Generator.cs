@@ -124,7 +124,13 @@ public class Generator : IIncrementalGenerator {
             var fieldType = field.Type;
 
             if (IsPrimitiveLike(fieldType)) {
-                var fieldDef = new FieldDef(field.Name, fieldType) {
+                string? magic = null;
+                var magicAttributeData = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "MagicAttribute");
+                if (magicAttributeData is not null && TryGetNamedArg(magicAttributeData, "Magic", out var magicVal)) {
+                    magic = magicVal.ToString();
+                }
+
+                var fieldDef = new FieldDef(field.Name, fieldType, magic) {
                     ByteSize = GetByteSizeForPrimitive(fieldType),
                 };
 
