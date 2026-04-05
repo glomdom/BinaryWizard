@@ -30,15 +30,15 @@ internal sealed class SegmentManager {
     public void AddField(FieldDef field, string? lengthRef = null) {
         if (field.IsDynamic) {
             if (string.IsNullOrEmpty(lengthRef)) throw new ArgumentNullException(nameof(lengthRef), "Length reference was not provided when field is dynamic");
-            
+
             CommitFixed();
-            
+
             _segments.Add(new DynamicSegment([field], lengthRef!));
-            
+
             Debug.WriteLine($"Added dynamic segment for {field.Name} (dep. {lengthRef})");
         } else {
             _currentFields.Add(field);
-            
+
             var size = field.TypeModel.IsFixedArray
                 ? field.TypeModel.FixedArraySize!.Value * field.TypeModel.InnerTypeByteSize!.Value
                 : field.ByteSize;
@@ -47,9 +47,15 @@ internal sealed class SegmentManager {
         }
     }
 
+    public void AddNestedObject(string fieldName, string typeName) {
+        CommitFixed();
+
+        _segments.Add(new NestedObjectSegment(fieldName, typeName));
+    }
+
     public IReadOnlyList<Segment> Commit() {
         CommitFixed();
-        
+
         Debug.WriteLine($"Finalized segmenting with {_segments.Count} segments");
 
         return _segments;
@@ -61,7 +67,7 @@ internal sealed class SegmentManager {
         }
 
         Debug.WriteLine($"Committing fixed segment with {_currentFields.Count} segments and size of {_currentFixedSize} bytes");
-    
+
         _segments.Add(new FixedSegment(_currentFields.ToList(), _currentFixedSize));
         _currentFields.Clear();
         _currentFixedSize = 0;

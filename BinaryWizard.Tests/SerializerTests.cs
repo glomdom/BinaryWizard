@@ -59,6 +59,7 @@ public class SerializerTests {
         stream.Position = 0;
 
         using var reader = new BinaryReader(stream);
+
         var actual = Arrays.FromBinary(reader);
         var expected = new Arrays {
             NumberArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -66,8 +67,8 @@ public class SerializerTests {
             OtherNumbers = [0, 1, 2, 3],
         };
 
-        Assert.Equal(expected.NumberArray, actual.NumberArray);
         Assert.Equal(expected.OtherNumbersSize, actual.OtherNumbersSize);
+        Assert.Equal(expected.NumberArray, actual.NumberArray);
         Assert.Equal(expected.OtherNumbers, actual.OtherNumbers);
     }
 
@@ -91,6 +92,6 @@ public class SerializerTests {
         var actual = Entity.FromBinary(reader);
         var expected = new Entity { Id = 69, /* Name = "glomdom", */ Position = new Vector3 { X = 1, Y = 2, Z = 3 } };
 
-        Assert.Equal(expected, actual);
+        Assert.Equal(actual, expected);
     }
 }

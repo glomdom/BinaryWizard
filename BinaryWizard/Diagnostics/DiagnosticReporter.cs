@@ -22,6 +22,47 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace BinaryWizard.Diagnostics;
 
 public static class DiagnosticReporter {
+    public static Diagnostic CreateArrayHasConflictingSizeArguments(IFieldSymbol field) {
+        var location = GetVariableDeclaratorNameLocation(field);
+
+        return Diagnostic.Create(
+            Diagnostics.ArrayHasConflictingSizeArguments,
+            location,
+            field.Name
+        );
+    }
+
+    public static Diagnostic CreateArrayIsMissingSizeArgument(IFieldSymbol field) {
+        var location = GetVariableDeclaratorNameLocation(field);
+
+        return Diagnostic.Create(
+            Diagnostics.MarkedArraylikeHasNoSizeOrSizeProviderRule,
+            location,
+            field.Name
+        );
+    }
+
+    public static Diagnostic CreateArrayIsMissingAttribute(IFieldSymbol field) {
+        var location = GetVariableDeclaratorNameLocation(field);
+
+        return Diagnostic.Create(
+            Diagnostics.ArrayHasNoBinaryArrayAttributeRule,
+            location,
+            field.Name
+        );
+    }
+
+    public static Diagnostic CreateUnmarkedSerializableForField(IFieldSymbol field) {
+        var location = GetVariableDeclaratorLocation(field);
+
+        return Diagnostic.Create(
+            Diagnostics.MissingBinarySerializableAttributeRule,
+            location,
+            field.Type.Name
+        );
+    }
+
+
     public static void ReportArrayHasConflictingSizeArguments(this SourceProductionContext spc, IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
