@@ -22,16 +22,20 @@ using Microsoft.CodeAnalysis;
 namespace BinaryWizard.Analysis;
 
 public static class SymbolExtensions {
-    public static string GetBinaryPrimitiveReader(this ITypeSymbol sym) {
-        return sym.SpecialType switch {
-            SpecialType.System_Int32 => "BinaryPrimitives.ReadInt32LittleEndian",
-            SpecialType.System_UInt32 => "BinaryPrimitives.ReadUInt32LittleEndian",
-            SpecialType.System_UInt16 => "BinaryPrimitives.ReadUInt16LittleEndian",
-
-            _ => throw new InvalidOperationException(
-                $"Unexpected type {sym.SpecialType} occurred in GetBinaryPrimitiveReaderForPrimitive"
-            ),
+    public static string GetBinaryPrimitiveReader(this ITypeSymbol sym, Endianness endianness) {
+        var typeName = sym.SpecialType switch {
+            SpecialType.System_Int32 => "Int32",
+            SpecialType.System_UInt32 => "UInt32",
+            SpecialType.System_Int16 => "Int16",
+            SpecialType.System_UInt16 => "UInt16",
+            SpecialType.System_Int64 => "Int64",
+            SpecialType.System_UInt64 => "UInt64",
+            _ => throw new InvalidOperationException($"Unexpected type {sym.SpecialType}")
         };
+
+        var endiannessStr = endianness == Endianness.Little ? "Little" : "Big";
+
+        return $"BinaryPrimitives.Read{typeName}{endiannessStr}Endian";
     }
 
     public static bool HasBinarySerializableAttribute(this ITypeSymbol sym) => HasAttribute(sym, "BinarySerializableAttribute");

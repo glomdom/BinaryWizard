@@ -49,8 +49,8 @@ internal static class CodeBuilder {
 
         foreach (var seg in meta.Segments) {
             switch (seg) {
-                case FixedSegment fixedSeg: ProcessFixedSegment(++segmentCount, fixedSeg, bodyBuilder, bodyIndent); break;
-                case DynamicSegment dynSeg: ProcessDynamicSegment(dynSeg, bodyBuilder, bodyIndent); break;
+                case FixedSegment fixedSeg: ProcessFixedSegment(++segmentCount, fixedSeg, bodyBuilder, bodyIndent, meta); break;
+                case DynamicSegment dynSeg: ProcessDynamicSegment(dynSeg, bodyBuilder, bodyIndent, meta); break;
                 case NestedObjectSegment nestedSeg: bodyBuilder.AppendLine($"{bodyIndent}result.{nestedSeg.FieldName} = {nestedSeg.TypeName}.FromBinary(reader);"); break;
             }
         }
@@ -76,7 +76,7 @@ internal static class CodeBuilder {
         spc.AddSource($"BinarySerializable_{meta.ClassName}.g.cs", SourceText.From(code, Encoding.UTF8));
     }
 
-    private static void ProcessDynamicSegment(DynamicSegment seg, StringBuilder sb, string indent) {
+    private static void ProcessDynamicSegment(DynamicSegment seg, StringBuilder sb, string indent, ClassSerializationMeta meta) {
         foreach (var field in seg.Fields) {
             var elementBytes = field.TypeModel.InnerType!.GetByteSize();
             var bufferName = $"__{field.Name}_buf";
@@ -86,13 +86,13 @@ internal static class CodeBuilder {
                             {{indent}}Span<byte> {{bufferName}} = stackalloc byte[{{elementBytes}} * result.{{seg.LengthReferenceFieldName}}];
                             {{indent}}if (reader.Read({{bufferName}}) < {{elementBytes}} * result.{{seg.LengthReferenceFieldName}}) throw new EndOfStreamException();
                             {{indent}}for (var i = 0; i < result.{{seg.LengthReferenceFieldName}}; i++) {
-                            {{indent}}    result.{{field.Name}}[i] = {{field.TypeModel.Type.GetBinaryPrimitiveReader()}}({{bufferName}}.Slice(i * {{elementBytes}}, {{elementBytes}}));
+                            {{indent}}    result.{{field.Name}}[i] = {{field.TypeModel.Type.GetBinaryPrimitiveReader(meta.Endianness)}}({{bufferName}}.Slice(i * {{elementBytes}}, {{elementBytes}}));
                             {{indent}}}
                             """);
         }
     }
 
-    private static void ProcessFixedSegment(int segmentIndex, FixedSegment seg, StringBuilder sb, string indent) {
+    private static void ProcessFixedSegment(int segmentIndex, FixedSegment seg, StringBuilder sb, string indent, ClassSerializationMeta meta) {
         var bufName = $"__buf_{segmentIndex}";
         var localOffset = 0;
 
@@ -108,7 +108,7 @@ internal static class CodeBuilder {
                 sb.AppendLine($$"""
                                 {{indent}}result.{{field.Name}} = new {{field.TypeModel.Type}}[{{field.TypeModel.FixedArraySize!.Value}}];
                                 {{indent}}for (var i = 0; i < {{field.TypeModel.FixedArraySize}}; i++) {
-                                {{indent}}    result.{{field.Name}}[i] = {{field.TypeModel.Type.GetBinaryPrimitiveReader()}}({{bufName}}.Slice({{localOffset}} + ({{elementBytes}} * i), {{elementBytes}}));
+                                {{indent}}    result.{{field.Name}}[i] = {{field.TypeModel.Type.GetBinaryPrimitiveReader(meta.Endianness)}}({{bufName}}.Slice({{localOffset}} + ({{elementBytes}} * i), {{elementBytes}}));
                                 {{indent}}}
                                 """);
 
@@ -117,7 +117,7 @@ internal static class CodeBuilder {
                 continue;
             }
 
-            sb.AppendLine($"{indent}result.{field.Name} = {field.TypeModel.Type.GetBinaryPrimitiveReader()}({bufName}.Slice({localOffset}, {field.ByteSize}));");
+            sb.AppendLine($"{indent}result.{field.Name} = {field.TypeModel.Type.GetBinaryPrimitiveReader(meta.Endianness)}({bufName}.Slice({localOffset}, {field.ByteSize}));");
 
             if (field.HasMagic) {
                 var magicStr = field.Magic;

@@ -18,5 +18,12 @@ using System;
 
 namespace BinaryWizard;
 
+public enum Endianness {
+    Little,
+    Big,
+}
+
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public sealed class BinarySerializableAttribute : Attribute { }
+public sealed class BinarySerializableAttribute : Attribute {
+    public Endianness Endianness { get; set; } = Endianness.Little;
+}

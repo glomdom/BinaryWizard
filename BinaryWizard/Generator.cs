@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -71,6 +70,14 @@ public class Generator : IIncrementalGenerator {
 
     private static ClassSerializationMeta? GetSerializationMeta(GeneratorAttributeSyntaxContext ctx, CancellationToken ct) {
         if (ctx.TargetSymbol is not INamedTypeSymbol namedSymbol) return null;
+
+        var serializableAttr = namedSymbol.GetAttributes()
+            .First(a => a.AttributeClass?.Name == "BinarySerializableAttribute");
+
+        var endianness = Endianness.Little;
+        if (serializableAttr.TryGetNamedArg("Endianness", out var endiannessArg)) {
+            endianness = (int)endiannessArg.Value! == 1 ? Endianness.Big : Endianness.Little;
+        }
 
         var diagnostics = new List<Diagnostic>();
         var namespaceName = namedSymbol.ContainingNamespace.IsGlobalNamespace
@@ -161,7 +168,8 @@ public class Generator : IIncrementalGenerator {
             className: namedSymbol.Name,
             kind: kind,
             segments: segmentManager.Commit(),
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            endianness: endianness
         );
     }
 }
