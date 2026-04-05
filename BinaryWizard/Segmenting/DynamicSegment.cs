@@ -15,7 +15,7 @@
  */
 
 using System.Collections.Generic;
-using BinaryWizard.Model;
+using BinaryWizard.Models;
 
 namespace BinaryWizard.Segmenting;
 

@@ -22,7 +22,7 @@ using System.Reflection;
 using System.Text;
 using BinaryWizard.Analysis;
 using BinaryWizard.Diagnostics;
-using BinaryWizard.Model;
+using BinaryWizard.Models;
 using BinaryWizard.Segmenting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

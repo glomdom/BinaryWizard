@@ -17,7 +17,7 @@
 using System;
 using Microsoft.CodeAnalysis;
 
-namespace BinaryWizard.Model;
+namespace BinaryWizard.Models;
 
 public sealed record FieldDef {
     public string Name { get; set; }

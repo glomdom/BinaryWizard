@@ -16,7 +16,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace BinaryWizard.Model;
+namespace BinaryWizard.Models;
 
 public sealed record TypeModel {
     public ITypeSymbol Type { get; set; }

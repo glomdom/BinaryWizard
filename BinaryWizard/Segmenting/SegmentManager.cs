@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using BinaryWizard.Model;
+using BinaryWizard.Models;
 
 namespace BinaryWizard.Segmenting;
 

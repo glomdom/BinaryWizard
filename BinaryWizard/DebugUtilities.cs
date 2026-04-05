@@ -15,7 +15,7 @@
  */
 
 using System.Diagnostics;
-using BinaryWizard.Model;
+using BinaryWizard.Models;
 
 namespace BinaryWizard;
 
