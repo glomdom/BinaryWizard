@@ -93,4 +93,21 @@ public class SerializerTests {
 
         Check.That(actual).HasFieldsWithSameValues(expected);
     }
+
+    [Fact]
+    public void BmpHeader_CorrectlySerialized() {
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true)) {
+            writer.Write(19778); // Signature ('BM')
+        }
+
+        stream.Position = 0;
+
+        using var reader = new BinaryReader(stream);
+
+        var actual = BmpHeader.FromBinary(reader);
+        var expected = new BmpHeader { Signature = 19778 };
+
+        Check.That(actual).HasFieldsWithSameValues(expected);
+    }
 }

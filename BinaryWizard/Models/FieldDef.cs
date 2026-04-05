@@ -24,7 +24,7 @@ public sealed record FieldDef {
     public int ByteSize { get; set; }
     public TypeModel TypeModel { get; set; }
 
-    public bool HasMagic { get; set; }
+    public bool HasMagic => _magic is not null;
     public string Magic => HasMagic ? _magic! : throw new InvalidOperationException("Attempted to get magic when HasMagic is false.");
 
     public bool IsDynamic => ByteSize == -1;
@@ -34,6 +34,7 @@ public sealed record FieldDef {
     public FieldDef(string name, ITypeSymbol type, string? magic = null) {
         Name = name;
         TypeModel = new TypeModel(type);
+
         _magic = magic;
     }
 }

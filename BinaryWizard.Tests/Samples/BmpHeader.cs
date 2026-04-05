@@ -20,7 +20,7 @@ namespace BinaryWizard.Tests.Samples;
 public partial struct BmpHeader {
     [Magic("BM")]
     public ushort Signature;
-    public uint FileSize;
-    public uint Reserved;
-    public uint DataOffset;
+    // public uint FileSize;
+    // public uint Reserved;
+    // public uint DataOffset;
 }

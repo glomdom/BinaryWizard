@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -87,8 +88,12 @@ public class Generator : IIncrementalGenerator {
             if (fieldType.IsPrimitiveLike()) {
                 string? magic = null;
                 var magicAttributeData = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "MagicAttribute");
-                if (magicAttributeData is not null && magicAttributeData.TryGetNamedArg("Magic", out var magicVal)) {
-                    magic = magicVal.ToString();
+                if (magicAttributeData is not null) {
+                    if (magicAttributeData.ConstructorArguments.Length > 0) {
+                        magic = magicAttributeData.ConstructorArguments[0].Value?.ToString();
+                    } else if (magicAttributeData.TryGetNamedArg("Magic", out var magicVal)) {
+                        magic = magicVal.Value?.ToString();
+                    }
                 }
 
                 var fieldDef = new FieldDef(field.Name, fieldType, magic) {

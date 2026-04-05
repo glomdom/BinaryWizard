@@ -17,12 +17,10 @@
 namespace BinaryWizard.Sample;
 
 [BinarySerializable]
-public partial struct SampleEntity {
-    public int IntegersCount;
-
-    // [BinaryArray(Size = 2)] public int[] ConstantInts;
-    // [BinaryArray(Size = 2)] public SampleVector[] ConstantSizeVectors;
-    //
-    [BinaryArray(SizeMember = nameof(IntegersCount))]
-    public int[] DynamicSizeVectors;
+public partial struct BmpHeader {
+    [Magic("BM")]
+    public ushort Signature;
+    // public uint FileSize;
+    // public uint Reserved;
+    // public uint DataOffset;
 }

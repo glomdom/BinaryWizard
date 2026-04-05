@@ -75,7 +75,7 @@ internal static class CodeBuilder {
 
         spc.AddSource($"BinarySerializable_{meta.ClassName}.g.cs", SourceText.From(code, Encoding.UTF8));
     }
-    
+
     private static void ProcessDynamicSegment(DynamicSegment seg, StringBuilder sb, string indent) {
         foreach (var field in seg.Fields) {
             var elementBytes = field.TypeModel.InnerType!.GetByteSize();
@@ -118,6 +118,19 @@ internal static class CodeBuilder {
             }
 
             sb.AppendLine($"{indent}result.{field.Name} = {field.TypeModel.Type.GetBinaryPrimitiveReader()}({bufName}.Slice({localOffset}, {field.ByteSize}));");
+
+            if (field.HasMagic) {
+                var magicStr = field.Magic;
+                long magicExpectedValue = 0;
+
+                // TODO: Support endianness
+                for (var i = 0; i < magicStr.Length; i++) {
+                    magicExpectedValue |= (long)magicStr[i] << i * 8;
+                }
+
+                sb.AppendLine(
+                    $"{indent}if (result.{field.Name} != {magicExpectedValue}) throw new InvalidDataException(\"Magic validation failed for {field.Name}. Expected {magicStr}.\");");
+            }
 
             localOffset += field.ByteSize;
         }
