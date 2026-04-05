@@ -19,11 +19,11 @@ using BinaryWizard.Models;
 
 namespace BinaryWizard.Segmenting;
 
-public record DynamicSegment : Segment {
-    public IReadOnlyList<FieldDef> Fields { get; set; }
-    public string LengthReferenceFieldName { get; }
+internal record DynamicSegment : Segment {
+    internal IReadOnlyList<FieldDef> Fields { get; set; }
+    internal string LengthReferenceFieldName { get; }
         
-    public DynamicSegment(List<FieldDef> fields, string lengthRef) {
+    internal DynamicSegment(List<FieldDef> fields, string lengthRef) {
         Fields = fields;
         LengthReferenceFieldName = lengthRef;
     }

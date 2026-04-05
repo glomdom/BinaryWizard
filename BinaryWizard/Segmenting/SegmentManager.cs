@@ -27,7 +27,7 @@ internal sealed class SegmentManager {
     private readonly List<FieldDef> _currentFields = [];
     private int _currentFixedSize;
 
-    public void AddField(FieldDef field, string? lengthRef = null) {
+    internal void AddField(FieldDef field, string? lengthRef = null) {
         if (field.IsDynamic) {
             if (string.IsNullOrEmpty(lengthRef)) throw new ArgumentNullException(nameof(lengthRef), "Length reference was not provided when field is dynamic");
 
@@ -47,13 +47,13 @@ internal sealed class SegmentManager {
         }
     }
 
-    public void AddNestedObject(string fieldName, string typeName) {
+    internal void AddNestedObject(string fieldName, string typeName) {
         CommitFixed();
 
         _segments.Add(new NestedObjectSegment(fieldName, typeName));
     }
 
-    public IReadOnlyList<Segment> Commit() {
+    internal IReadOnlyList<Segment> Commit() {
         CommitFixed();
 
         Debug.WriteLine($"Finalized segmenting with {_segments.Count} segments");
@@ -73,7 +73,7 @@ internal sealed class SegmentManager {
         _currentFixedSize = 0;
     }
 
-    public void Clear() {
+    internal void Clear() {
         _segments.Clear();
         _currentFields.Clear();
         _currentFixedSize = 0;

@@ -21,15 +21,15 @@ using Microsoft.CodeAnalysis;
 namespace BinaryWizard.Models;
 
 // TODO: Maybe make a factory for this, ctor might grow more.
-public sealed record ClassSerializationMeta {
-    public string Namespace { get; }
-    public string ClassName { get; }
-    public string Kind { get; }
-    public Endianness Endianness { get; }
-    public IReadOnlyList<Segment> Segments { get; }
-    public IReadOnlyList<Diagnostic> Diagnostics { get; }
+internal sealed record ClassSerializationMeta {
+    internal string Namespace { get; }
+    internal string ClassName { get; }
+    internal string Kind { get; }
+    internal Endianness Endianness { get; }
+    internal IReadOnlyList<Segment> Segments { get; }
+    internal IReadOnlyList<Diagnostic> Diagnostics { get; }
 
-    public ClassSerializationMeta(string ns, string className, string kind, IReadOnlyList<Segment> segments, IReadOnlyList<Diagnostic> diagnostics, Endianness endianness) {
+    internal ClassSerializationMeta(string ns, string className, string kind, IReadOnlyList<Segment> segments, IReadOnlyList<Diagnostic> diagnostics, Endianness endianness) {
         Namespace = ns;
         ClassName = className;
         Kind = kind;

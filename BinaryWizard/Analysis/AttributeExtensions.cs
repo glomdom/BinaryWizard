@@ -19,16 +19,16 @@ using Microsoft.CodeAnalysis;
 
 namespace BinaryWizard.Analysis;
 
-public static class AttributeExtensions {
-    public static bool AreAllNamedArgsProvided(this AttributeData attr, params string[] names) {
+internal static class AttributeExtensions {
+    internal static bool AreAllNamedArgsProvided(this AttributeData attr, params string[] names) {
         return attr.NamedArguments.Length != 0 && names.Select(name => attr.NamedArguments.Any(pair => pair.Key == name)).All(found => found);
     }
 
-    public static bool AreAnyNamedArgsProvided(this AttributeData attr, params string[] names) {
+    internal static bool AreAnyNamedArgsProvided(this AttributeData attr, params string[] names) {
         return attr.NamedArguments.Length != 0 && names.Any(name => attr.NamedArguments.Any(pair => pair.Key == name));
     }
 
-    public static bool TryGetNamedArg(
+    internal static bool TryGetNamedArg(
         this AttributeData attr,
         string name,
         out TypedConstant typedConstant

@@ -21,8 +21,8 @@ using Microsoft.CodeAnalysis;
 
 namespace BinaryWizard.Analysis;
 
-public static class SymbolExtensions {
-    public static string GetBinaryPrimitiveReader(this ITypeSymbol sym, Endianness endianness) {
+internal static class SymbolExtensions {
+    internal static string GetBinaryPrimitiveReader(this ITypeSymbol sym, Endianness endianness) {
         var typeName = sym.SpecialType switch {
             SpecialType.System_Int32 => "Int32",
             SpecialType.System_UInt32 => "UInt32",
@@ -38,10 +38,10 @@ public static class SymbolExtensions {
         return $"BinaryPrimitives.Read{typeName}{endiannessStr}Endian";
     }
 
-    public static bool HasBinarySerializableAttribute(this ITypeSymbol sym) => HasAttribute(sym, "BinarySerializableAttribute");
-    public static bool HasAttribute(this ITypeSymbol sym, string attrName) => sym.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
+    internal static bool HasBinarySerializableAttribute(this ITypeSymbol sym) => HasAttribute(sym, "BinarySerializableAttribute");
+    internal static bool HasAttribute(this ITypeSymbol sym, string attrName) => sym.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
 
-    public static int GetByteSize(this ITypeSymbol primitive) {
+    internal static int GetByteSize(this ITypeSymbol primitive) {
         return primitive.SpecialType switch {
             SpecialType.System_Boolean => 1,
             SpecialType.System_Char => 1,
@@ -60,7 +60,7 @@ public static class SymbolExtensions {
         };
     }
 
-    public static bool IsPrimitiveLike(this ITypeSymbol symbol) {
+    internal static bool IsPrimitiveLike(this ITypeSymbol symbol) {
         return symbol.SpecialType switch {
             SpecialType.System_Boolean or
                 SpecialType.System_Byte or
@@ -81,7 +81,7 @@ public static class SymbolExtensions {
         };
     }
 
-    public static bool IsArrayLike(this ITypeSymbol symbol, [NotNullWhen(true)] out IArrayTypeSymbol? arraySymbol) {
+    internal static bool IsArrayLike(this ITypeSymbol symbol, [NotNullWhen(true)] out IArrayTypeSymbol? arraySymbol) {
         if (symbol is IArrayTypeSymbol arr) {
             arraySymbol = arr;
 

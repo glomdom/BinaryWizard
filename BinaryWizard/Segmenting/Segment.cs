@@ -16,4 +16,4 @@
 
 namespace BinaryWizard.Segmenting;
 
-public abstract record Segment;
+internal abstract record Segment;

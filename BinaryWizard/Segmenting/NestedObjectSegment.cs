@@ -16,11 +16,11 @@
 
 namespace BinaryWizard.Segmenting;
 
-public sealed record NestedObjectSegment : Segment {
-    public string FieldName { get; }
-    public string TypeName { get; }
+internal sealed record NestedObjectSegment : Segment {
+    internal string FieldName { get; }
+    internal string TypeName { get; }
 
-    public NestedObjectSegment(string fieldName, string typeName) {
+    internal NestedObjectSegment(string fieldName, string typeName) {
         FieldName = fieldName;
         TypeName = typeName;
     }

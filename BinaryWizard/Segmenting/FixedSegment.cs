@@ -19,11 +19,11 @@ using BinaryWizard.Models;
 
 namespace BinaryWizard.Segmenting;
 
-public record FixedSegment : Segment {
-    public IReadOnlyList<FieldDef> Fields { get; set; }
-    public int Bytes { get; set; }
+internal record FixedSegment : Segment {
+    internal IReadOnlyList<FieldDef> Fields { get; set; }
+    internal int Bytes { get; set; }
 
-    public FixedSegment(List<FieldDef> fields, int bytes) {
+    internal FixedSegment(List<FieldDef> fields, int bytes) {
         Fields = fields;
         Bytes = bytes;
     }

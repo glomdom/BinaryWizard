@@ -19,19 +19,19 @@ using Microsoft.CodeAnalysis;
 
 namespace BinaryWizard.Models;
 
-public sealed record FieldDef {
-    public string Name { get; set; }
-    public int ByteSize { get; set; }
-    public TypeModel TypeModel { get; set; }
+internal sealed record FieldDef {
+    internal string Name { get; set; }
+    internal int ByteSize { get; set; }
+    internal TypeModel TypeModel { get; set; }
 
-    public bool HasMagic => _magic is not null;
-    public string Magic => HasMagic ? _magic! : throw new InvalidOperationException("Attempted to get magic when HasMagic is false.");
+    internal bool HasMagic => _magic is not null;
+    internal string Magic => HasMagic ? _magic! : throw new InvalidOperationException("Attempted to get magic when HasMagic is false.");
 
-    public bool IsDynamic => ByteSize == -1;
+    internal bool IsDynamic => ByteSize == -1;
 
     private readonly string? _magic;
 
-    public FieldDef(string name, ITypeSymbol type, string? magic = null) {
+    internal FieldDef(string name, ITypeSymbol type, string? magic = null) {
         Name = name;
         TypeModel = new TypeModel(type);
 

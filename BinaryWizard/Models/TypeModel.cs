@@ -18,16 +18,16 @@ using Microsoft.CodeAnalysis;
 
 namespace BinaryWizard.Models;
 
-public sealed record TypeModel {
-    public ITypeSymbol Type { get; set; }
+internal sealed record TypeModel {
+    internal ITypeSymbol Type { get; set; }
 
-    public ITypeSymbol? InnerType { get; set; }
-    public int? FixedArraySize { get; set; }
-    public int? InnerTypeByteSize { get; set; }
-    public bool IsFixedArray => FixedArraySize is not null && InnerType is not null;
-    public bool IsDynamicArray => FixedArraySize is null && InnerType is not null;
+    internal ITypeSymbol? InnerType { get; set; }
+    internal int? FixedArraySize { get; set; }
+    internal int? InnerTypeByteSize { get; set; }
+    internal bool IsFixedArray => FixedArraySize is not null && InnerType is not null;
+    internal bool IsDynamicArray => FixedArraySize is null && InnerType is not null;
 
-    public TypeModel(ITypeSymbol type, int? fixedArraySize = null) {
+    internal TypeModel(ITypeSymbol type, int? fixedArraySize = null) {
         Type = type;
         FixedArraySize = fixedArraySize;
     }

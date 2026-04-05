@@ -21,8 +21,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace BinaryWizard.Diagnostics;
 
-public static class DiagnosticReporter {
-    public static Diagnostic CreateArrayHasConflictingSizeArguments(IFieldSymbol field) {
+internal static class DiagnosticReporter {
+    internal static Diagnostic CreateArrayHasConflictingSizeArguments(IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
         return Diagnostic.Create(
@@ -32,7 +32,7 @@ public static class DiagnosticReporter {
         );
     }
 
-    public static Diagnostic CreateArrayIsMissingSizeArgument(IFieldSymbol field) {
+    internal static Diagnostic CreateArrayIsMissingSizeArgument(IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
         return Diagnostic.Create(
@@ -42,7 +42,7 @@ public static class DiagnosticReporter {
         );
     }
 
-    public static Diagnostic CreateArrayIsMissingAttribute(IFieldSymbol field) {
+    internal static Diagnostic CreateArrayIsMissingAttribute(IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
         return Diagnostic.Create(
@@ -52,7 +52,7 @@ public static class DiagnosticReporter {
         );
     }
 
-    public static Diagnostic CreateUnmarkedSerializableForField(IFieldSymbol field) {
+    internal static Diagnostic CreateUnmarkedSerializableForField(IFieldSymbol field) {
         var location = GetVariableDeclaratorLocation(field);
 
         return Diagnostic.Create(
@@ -63,7 +63,7 @@ public static class DiagnosticReporter {
     }
 
 
-    public static void ReportArrayHasConflictingSizeArguments(this SourceProductionContext spc, IFieldSymbol field) {
+    internal static void ReportArrayHasConflictingSizeArguments(this SourceProductionContext spc, IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
         spc.ReportDiagnostic(Diagnostic.Create(
@@ -73,7 +73,7 @@ public static class DiagnosticReporter {
         ));
     }
 
-    public static void ReportArrayIsMissingSizeArgument(this SourceProductionContext spc, IFieldSymbol field) {
+    internal static void ReportArrayIsMissingSizeArgument(this SourceProductionContext spc, IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
         spc.ReportDiagnostic(Diagnostic.Create(
@@ -83,7 +83,7 @@ public static class DiagnosticReporter {
         ));
     }
 
-    public static void ReportArrayIsMissingAttribute(this SourceProductionContext spc, IFieldSymbol field) {
+    internal static void ReportArrayIsMissingAttribute(this SourceProductionContext spc, IFieldSymbol field) {
         var location = GetVariableDeclaratorNameLocation(field);
 
         spc.ReportDiagnostic(Diagnostic.Create(
@@ -93,7 +93,7 @@ public static class DiagnosticReporter {
         ));
     }
 
-    public static void ReportUnmarkedSerializableForField(this SourceProductionContext spc, IFieldSymbol field) {
+    internal static void ReportUnmarkedSerializableForField(this SourceProductionContext spc, IFieldSymbol field) {
         var location = GetVariableDeclaratorLocation(field);
 
         spc.ReportDiagnostic(Diagnostic.Create(
