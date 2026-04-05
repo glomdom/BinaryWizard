@@ -123,9 +123,14 @@ internal static class CodeBuilder {
                 var magicStr = field.Magic;
                 long magicExpectedValue = 0;
 
-                // TODO: Support endianness
-                for (var i = 0; i < magicStr.Length; i++) {
-                    magicExpectedValue |= (long)magicStr[i] << i * 8;
+                if (meta.Endianness == Endianness.Little) {
+                    for (var i = 0; i < magicStr.Length; i++) {
+                        magicExpectedValue |= (long)magicStr[i] << i * 8;
+                    }
+                } else {
+                    for (var i = 0; i < magicStr.Length; i++) {
+                        magicExpectedValue |= (long)magicStr[i] << (magicStr.Length - 1 - i) * 8;
+                    }
                 }
 
                 sb.AppendLine(
