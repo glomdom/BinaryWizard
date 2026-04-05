@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -125,7 +124,7 @@ public class Generator : IIncrementalGenerator {
         foreach (var field in fields) {
             var fieldType = field.Type;
 
-            if (IsPrimitiveLike(fieldType)) {
+            if (fieldType.IsPrimitiveLike()) {
                 string? magic = null;
                 var magicAttributeData = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "MagicAttribute");
                 if (magicAttributeData is not null && magicAttributeData.TryGetNamedArg("Magic", out var magicVal)) {
@@ -133,12 +132,12 @@ public class Generator : IIncrementalGenerator {
                 }
 
                 var fieldDef = new FieldDef(field.Name, fieldType, magic) {
-                    ByteSize = GetByteSizeForPrimitive(fieldType),
+                    ByteSize = fieldType.GetByteSize(),
                 };
 
                 segmentManager.AddField(fieldDef);
                 DebugUtilities.CreatedFieldDef(fieldDef);
-            } else if (IsArrayLike(fieldType, out var arrSymbol)) {
+            } else if (fieldType.IsArrayLike(out var arrSymbol)) {
                 if (arrSymbol.Rank != 1) throw new NotSupportedException("Arrays which have more than 1 dimension are not supported.");
 
                 var binaryArrayAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "BinaryArrayAttribute");
@@ -163,13 +162,13 @@ public class Generator : IIncrementalGenerator {
                 var fieldDef = new FieldDef(field.Name, arrSymbol.ElementType) {
                     TypeModel = {
                         InnerType = arrSymbol.ElementType,
-                        InnerTypeByteSize = GetByteSizeForPrimitive(arrSymbol.ElementType),
+                        InnerTypeByteSize = arrSymbol.ElementType.GetByteSize(),
                     },
                 };
 
                 if (binaryArrayAttr.TryGetNamedArg("Size", out var arrSize)) {
                     var arrSizeValue = (int)arrSize.Value!;
-                    fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
+                    fieldDef.ByteSize = arrSizeValue * arrSymbol.ElementType.GetByteSize();
                     fieldDef.TypeModel.FixedArraySize = arrSizeValue;
 
                     DebugUtilities.CreatedFieldDef(fieldDef);
@@ -181,7 +180,7 @@ public class Generator : IIncrementalGenerator {
                     DebugUtilities.CreatedFieldDef(fieldDef);
                     segmentManager.AddField(fieldDef, arrSizeRef);
                 }
-            } else if (HasBinarySerializableAttribute(fieldType)) {
+            } else if (fieldType.HasBinarySerializableAttribute()) {
                 FlushSegments();
                 sb.AppendLine($"{indent}result.{field.Name} = {fieldType.Name}.FromBinary(reader);");
 
@@ -210,7 +209,7 @@ public class Generator : IIncrementalGenerator {
 
     private void ProcessDynamicSegment(DynamicSegment seg, StringBuilder sb, string indent) {
         foreach (var field in seg.Fields) {
-            var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
+            var elementBytes = field.TypeModel.InnerType!.GetByteSize();
             var bufferName = $"__{field.Name}_buf";
 
             sb.AppendLine($$"""
@@ -218,7 +217,7 @@ public class Generator : IIncrementalGenerator {
                             {{indent}}Span<byte> {{bufferName}} = stackalloc byte[{{elementBytes}} * result.{{seg.LengthReferenceFieldName}}];
                             {{indent}}if (reader.Read({{bufferName}}) < {{elementBytes}} * result.{{seg.LengthReferenceFieldName}}) throw new EndOfStreamException();
                             {{indent}}for (var i = 0; i < result.{{seg.LengthReferenceFieldName}}; i++) {
-                            {{indent}}    result.{{field.Name}}[i] = {{GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}}({{bufferName}}.Slice(i * {{elementBytes}}, {{elementBytes}}));
+                            {{indent}}    result.{{field.Name}}[i] = {{field.TypeModel.Type.GetBinaryPrimitiveReader()}}({{bufferName}}.Slice(i * {{elementBytes}}, {{elementBytes}}));
                             {{indent}}}
                             """);
         }
@@ -235,12 +234,12 @@ public class Generator : IIncrementalGenerator {
 
         foreach (var field in seg.Fields) {
             if (field.TypeModel.IsFixedArray) {
-                var elementBytes = GetByteSizeForPrimitive(field.TypeModel.InnerType!);
+                var elementBytes = field.TypeModel.InnerType!.GetByteSize();
 
                 sb.AppendLine($$"""
                                 {{indent}}result.{{field.Name}} = new {{field.TypeModel.Type}}[{{field.TypeModel.FixedArraySize!.Value}}];
                                 {{indent}}for (var i = 0; i < {{field.TypeModel.FixedArraySize}}; i++) {
-                                {{indent}}    result.{{field.Name}}[i] = {{GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}}({{bufName}}.Slice({{localOffset}} + ({{elementBytes}} * i), {{elementBytes}}));
+                                {{indent}}    result.{{field.Name}}[i] = {{field.TypeModel.Type.GetBinaryPrimitiveReader()}}({{bufName}}.Slice({{localOffset}} + ({{elementBytes}} * i), {{elementBytes}}));
                                 {{indent}}}
                                 """);
 
@@ -249,77 +248,9 @@ public class Generator : IIncrementalGenerator {
                 continue;
             }
 
-            sb.AppendLine($"{indent}result.{field.Name} = {GetBinaryPrimitiveReaderForPrimitive(field.TypeModel.Type)}({bufName}.Slice({localOffset}, {field.ByteSize}));");
+            sb.AppendLine($"{indent}result.{field.Name} = {field.TypeModel.Type.GetBinaryPrimitiveReader()}({bufName}.Slice({localOffset}, {field.ByteSize}));");
 
             localOffset += field.ByteSize;
         }
-    }
-
-    // TODO: support type context, to know if its little endian or not.
-    private string GetBinaryPrimitiveReaderForPrimitive(ITypeSymbol sym) {
-        return sym.SpecialType switch {
-            SpecialType.System_Int32 => "BinaryPrimitives.ReadInt32LittleEndian",
-            SpecialType.System_UInt32 => "BinaryPrimitives.ReadUInt32LittleEndian",
-            SpecialType.System_UInt16 => "BinaryPrimitives.ReadUInt16LittleEndian",
-
-            _ => throw new InvalidOperationException(
-                $"Unexpected type {sym.SpecialType} occurred in GetBinaryPrimitiveReaderForPrimitive"
-            ),
-        };
-    }
-
-    private static bool HasBinarySerializableAttribute(ITypeSymbol sym) => HasAttribute(sym, "BinarySerializableAttribute");
-    private static bool HasAttribute(ITypeSymbol sym, string attrName) => sym.GetAttributes().Any(a => a.AttributeClass?.Name == attrName);
-
-    private int GetByteSizeForPrimitive(ITypeSymbol primitive) {
-        return primitive.SpecialType switch {
-            SpecialType.System_Boolean => 1,
-            SpecialType.System_Char => 1,
-            SpecialType.System_SByte => 1,
-            SpecialType.System_Byte => 1,
-            SpecialType.System_Int16 => 2,
-            SpecialType.System_UInt16 => 2,
-            SpecialType.System_Int32 => 4,
-            SpecialType.System_UInt32 => 4,
-            SpecialType.System_Int64 => 8,
-            SpecialType.System_UInt64 => 8,
-            SpecialType.System_Decimal => 16,
-            SpecialType.System_Double => 32,
-
-            _ => throw new InvalidOperationException("Unexpected case encountered."),
-        };
-    }
-
-    private static bool IsPrimitiveLike(ITypeSymbol symbol) {
-        return symbol.SpecialType switch {
-            SpecialType.System_Boolean or
-                SpecialType.System_Byte or
-                SpecialType.System_SByte or
-                SpecialType.System_Int16 or
-                SpecialType.System_UInt16 or
-                SpecialType.System_Int32 or
-                SpecialType.System_UInt32 or
-                SpecialType.System_Int64 or
-                SpecialType.System_UInt64 or
-                SpecialType.System_Single or
-                SpecialType.System_Double or
-                SpecialType.System_Char or
-                SpecialType.System_String or
-                SpecialType.System_Decimal => true,
-
-            _ => false,
-        };
-    }
-
-    private static bool IsArrayLike(ITypeSymbol symbol, [NotNullWhen(true)] out IArrayTypeSymbol? arraySymbol) {
-        if (symbol is IArrayTypeSymbol arr) {
-            arraySymbol = arr;
-
-            return true;
-        }
-
-        arraySymbol = null;
-
-        return false;
     }
 }
