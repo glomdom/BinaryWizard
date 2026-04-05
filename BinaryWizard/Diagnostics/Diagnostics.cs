@@ -16,7 +16,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace BinaryWizard;
+namespace BinaryWizard.Diagnostics;
 
 internal static class Diagnostics {
     internal static readonly DiagnosticDescriptor MissingBinarySerializableAttributeRule = new(
@@ -27,7 +27,7 @@ internal static class Diagnostics {
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
-    
+
     internal static readonly DiagnosticDescriptor ArrayHasNoBinaryArrayAttributeRule = new(
         id: "BW0002",
         title: "Array type does not have a [BinaryArray] attribute",
@@ -36,7 +36,7 @@ internal static class Diagnostics {
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
-    
+
     internal static readonly DiagnosticDescriptor MarkedArraylikeHasNoSizeOrSizeProviderRule = new(
         id: "BW0003",
         title: "Array marked with [BinaryArray] is missing size provider or constant size",
@@ -45,7 +45,7 @@ internal static class Diagnostics {
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true
     );
-    
+
     internal static readonly DiagnosticDescriptor ArrayHasConflictingSizeArguments = new(
         id: "BW0004",
         title: "Array marked with [BinaryArray] has conflicting size arguments",

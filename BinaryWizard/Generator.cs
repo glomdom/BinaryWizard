@@ -21,6 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using BinaryWizard.Diagnostics;
 using BinaryWizard.Model;
 using BinaryWizard.Segmenting;
 using Microsoft.CodeAnalysis;
@@ -141,19 +142,19 @@ public class Generator : IIncrementalGenerator {
 
                 var binaryArrayAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "BinaryArrayAttribute");
                 if (binaryArrayAttr is null) {
-                    ReportArrayIsMissingAttribute(spc, field);
+                    spc.ReportArrayIsMissingAttribute(field);
 
                     continue;
                 }
 
                 if (!AreAnyNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
-                    ReportArrayIsMissingSizeArgument(spc, field);
+                    spc.ReportArrayIsMissingSizeArgument(field);
 
                     continue;
                 }
 
                 if (AreAllNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
-                    ReportArrayHasConflictingSizeArguments(spc, field);
+                    spc.ReportArrayHasConflictingSizeArguments(field);
 
                     continue;
                 }
@@ -185,7 +186,7 @@ public class Generator : IIncrementalGenerator {
 
                 Debug.WriteLine("Built statements for nested object");
             } else {
-                ReportUnmarkedSerializableForField(spc, field);
+                spc.ReportUnmarkedSerializableForField(field);
             }
         }
 
@@ -343,62 +344,5 @@ public class Generator : IIncrementalGenerator {
         typedConstant = default;
 
         return false;
-    }
-
-    private void ReportArrayHasConflictingSizeArguments(SourceProductionContext spc, IFieldSymbol field) {
-        var location = GetVariableDeclaratorNameLocation(field);
-
-        spc.ReportDiagnostic(Diagnostic.Create(
-            Diagnostics.ArrayHasConflictingSizeArguments,
-            location,
-            field.Name
-        ));
-    }
-
-    private void ReportArrayIsMissingSizeArgument(SourceProductionContext spc, IFieldSymbol field) {
-        var location = GetVariableDeclaratorNameLocation(field);
-
-        spc.ReportDiagnostic(Diagnostic.Create(
-            Diagnostics.MarkedArraylikeHasNoSizeOrSizeProviderRule,
-            location,
-            field.Name
-        ));
-    }
-
-    private void ReportArrayIsMissingAttribute(SourceProductionContext spc, IFieldSymbol field) {
-        var location = GetVariableDeclaratorNameLocation(field);
-
-        spc.ReportDiagnostic(Diagnostic.Create(
-            Diagnostics.ArrayHasNoBinaryArrayAttributeRule,
-            location,
-            field.Name
-        ));
-    }
-
-    private void ReportUnmarkedSerializableForField(SourceProductionContext spc, IFieldSymbol field) {
-        var location = GetVariableDeclaratorLocation(field);
-
-        spc.ReportDiagnostic(Diagnostic.Create(
-            Diagnostics.MissingBinarySerializableAttributeRule,
-            location,
-            field.Type.Name
-        ));
-    }
-
-    private Location GetVariableDeclaratorLocation(IFieldSymbol field) {
-        var fieldSyntaxRef = field.DeclaringSyntaxReferences.FirstOrDefault();
-        var fieldSyntax = fieldSyntaxRef?.GetSyntax() as VariableDeclaratorSyntax;
-        if (fieldSyntax?.Parent is not VariableDeclarationSyntax varDecl) throw new Exception("Field parent is not a variable declaration.");
-
-        return varDecl.Type.GetLocation();
-    }
-
-    private Location GetVariableDeclaratorNameLocation(IFieldSymbol field) {
-        var fieldSyntaxRef = field.DeclaringSyntaxReferences.FirstOrDefault();
-        if (fieldSyntaxRef is null) throw new Exception("No syntax reference found for field.");
-
-        return fieldSyntaxRef.GetSyntax() is not VariableDeclaratorSyntax fieldSyntax
-            ? throw new Exception("Field syntax is not a VariableDeclaratorSyntax.")
-            : fieldSyntax.Identifier.GetLocation();
     }
 }
