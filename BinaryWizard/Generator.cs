@@ -163,6 +163,14 @@ public class Generator : IIncrementalGenerator {
     private void GenerateCode(SourceProductionContext spc, ClassSerializationMeta? meta) {
         if (meta is null) return;
 
+        foreach (var diag in meta.Diagnostics) {
+            spc.ReportDiagnostic(diag);
+        }
+
+        if (meta.Diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error)) {
+            return;
+        }
+
         Debug.WriteLine($"Starting code generation for {meta.ClassName}");
 
         var bodyBuilder = new StringBuilder();
