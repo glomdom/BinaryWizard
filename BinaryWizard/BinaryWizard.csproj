@@ -14,7 +14,7 @@
 
         <RootNamespace>BinaryWizard</RootNamespace>
         <PackageId>BinaryWizard</PackageId>
-        <Version>0.0.1</Version>
+        <Version>0.0.2</Version>
         <Authors>glomdom</Authors>
         <Description>A blazing fast binary serialization source generator.</Description>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
