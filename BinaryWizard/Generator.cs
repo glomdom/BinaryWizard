@@ -200,7 +200,6 @@ public class Generator : IIncrementalGenerator {
                      {{baseIndent}}        var result = new {{meta.ClassName}}();
 
                      {{bodyBuilder}}
-
                      {{baseIndent}}        return result;
                      {{baseIndent}}    }
                      {{baseIndent}}}
