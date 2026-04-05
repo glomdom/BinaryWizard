@@ -16,6 +16,7 @@
 
 using System.Text;
 using BinaryWizard.Tests.Samples;
+using NFluent;
 
 namespace BinaryWizard.Tests;
 
@@ -38,7 +39,7 @@ public class SerializerTests {
             X = 1, Y = 2, Z = 3,
         };
 
-        Assert.Equal(expected, actual);
+        Check.That(actual).HasFieldsWithSameValues(expected);
     }
 
     [Fact]
@@ -67,9 +68,7 @@ public class SerializerTests {
             OtherNumbers = [0, 1, 2, 3],
         };
 
-        Assert.Equal(expected.OtherNumbersSize, actual.OtherNumbersSize);
-        Assert.Equal(expected.NumberArray, actual.NumberArray);
-        Assert.Equal(expected.OtherNumbers, actual.OtherNumbers);
+        Check.That(actual).HasFieldsWithSameValues(expected);
     }
 
     [Fact]
@@ -92,6 +91,6 @@ public class SerializerTests {
         var actual = Entity.FromBinary(reader);
         var expected = new Entity { Id = 69, /* Name = "glomdom", */ Position = new Vector3 { X = 1, Y = 2, Z = 3 } };
 
-        Assert.Equal(actual, expected);
+        Check.That(actual).HasFieldsWithSameValues(expected);
     }
 }
