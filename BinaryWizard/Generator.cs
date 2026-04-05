@@ -21,6 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using BinaryWizard.Analysis;
 using BinaryWizard.Diagnostics;
 using BinaryWizard.Model;
 using BinaryWizard.Segmenting;
@@ -127,7 +128,7 @@ public class Generator : IIncrementalGenerator {
             if (IsPrimitiveLike(fieldType)) {
                 string? magic = null;
                 var magicAttributeData = field.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "MagicAttribute");
-                if (magicAttributeData is not null && TryGetNamedArg(magicAttributeData, "Magic", out var magicVal)) {
+                if (magicAttributeData is not null && magicAttributeData.TryGetNamedArg("Magic", out var magicVal)) {
                     magic = magicVal.ToString();
                 }
 
@@ -147,13 +148,13 @@ public class Generator : IIncrementalGenerator {
                     continue;
                 }
 
-                if (!AreAnyNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
+                if (!binaryArrayAttr.AreAnyNamedArgsProvided("Size", "SizeMember")) {
                     spc.ReportArrayIsMissingSizeArgument(field);
 
                     continue;
                 }
 
-                if (AreAllNamedArgsProvided(binaryArrayAttr, "Size", "SizeMember")) {
+                if (binaryArrayAttr.AreAllNamedArgsProvided("Size", "SizeMember")) {
                     spc.ReportArrayHasConflictingSizeArguments(field);
 
                     continue;
@@ -166,14 +167,14 @@ public class Generator : IIncrementalGenerator {
                     },
                 };
 
-                if (TryGetNamedArg(binaryArrayAttr, "Size", out var arrSize)) {
+                if (binaryArrayAttr.TryGetNamedArg("Size", out var arrSize)) {
                     var arrSizeValue = (int)arrSize.Value!;
                     fieldDef.ByteSize = arrSizeValue * GetByteSizeForPrimitive(arrSymbol.ElementType);
                     fieldDef.TypeModel.FixedArraySize = arrSizeValue;
 
                     DebugUtilities.CreatedFieldDef(fieldDef);
                     segmentManager.AddField(fieldDef);
-                } else if (TryGetNamedArg(binaryArrayAttr, "SizeMember", out var sizeMember)) {
+                } else if (binaryArrayAttr.TryGetNamedArg("SizeMember", out var sizeMember)) {
                     var arrSizeRef = (string)sizeMember.Value!;
                     fieldDef.ByteSize = -1;
 
@@ -318,30 +319,6 @@ public class Generator : IIncrementalGenerator {
         }
 
         arraySymbol = null;
-
-        return false;
-    }
-
-    private static bool AreAllNamedArgsProvided(AttributeData attr, params string[] names) {
-        return attr.NamedArguments.Length != 0 && names.Select(name => attr.NamedArguments.Any(pair => pair.Key == name)).All(found => found);
-    }
-
-    private static bool AreAnyNamedArgsProvided(AttributeData attr, params string[] names) {
-        return attr.NamedArguments.Length != 0 && names.Any(name => attr.NamedArguments.Any(pair => pair.Key == name));
-    }
-
-    private static bool TryGetNamedArg(
-        AttributeData attr,
-        string name,
-        out TypedConstant typedConstant
-    ) {
-        foreach (var pair in attr.NamedArguments.Where(pair => pair.Key == name)) {
-            typedConstant = pair.Value;
-
-            return true;
-        }
-
-        typedConstant = default;
 
         return false;
     }
