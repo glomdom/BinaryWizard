@@ -20,18 +20,21 @@ using Microsoft.CodeAnalysis;
 
 namespace BinaryWizard.Models;
 
+// TODO: Maybe make a factory for this, ctor might grow more.
 public sealed record ClassSerializationMeta {
     public string Namespace { get; }
     public string ClassName { get; }
     public string Kind { get; }
+    public Endianness Endianness { get; }
     public IReadOnlyList<Segment> Segments { get; }
     public IReadOnlyList<Diagnostic> Diagnostics { get; }
 
-    public ClassSerializationMeta(string ns, string className, string kind, IReadOnlyList<Segment> segments, IReadOnlyList<Diagnostic> diagnostics) {
+    public ClassSerializationMeta(string ns, string className, string kind, IReadOnlyList<Segment> segments, IReadOnlyList<Diagnostic> diagnostics, Endianness endianness) {
         Namespace = ns;
         ClassName = className;
         Kind = kind;
         Segments = segments;
         Diagnostics = diagnostics;
+        Endianness = endianness;
     }
 }
